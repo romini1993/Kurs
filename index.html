@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -12,23 +14,101 @@
     <meta name="theme-color" content="#0f172a">
     <title>Calc Kurs Ultra</title>
 
-    <script>
-        // DAFTARIN SERVICE WORKER (Wajib biar tombol Install muncul)
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const swCode = `
-                    self.addEventListener('install', e => self.skipWaiting());
-                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
-                `;
-                const blob = new Blob([swCode], {type: 'application/javascript'});
-                navigator.serviceWorker.register(URL.createObjectURL(blob))
-                .then(() => console.log("Service Worker Aman, Bro!"))
-                .catch(err => console.log("SW Gagal:", err));
-            });
-        }
-    </script>
-    
     <style>
-        /* ... (style yang kemarin jangan diubah) ... */
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #38bdf8;
+            --text: #f8fafc;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); margin: 0; padding: env(safe-area-inset-top) 20px 20px 20px; display: flex; justify-content: center; overflow-x: hidden; }
+        .container { width: 100%; max-width: 400px; padding-bottom: 40px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 20; }
+        h2 { margin: 0; font-size: 20px; color: var(--accent); }
+        .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        
+        .coin-card { background: var(--card); border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .coin-info { flex: 1; }
+        .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 2px; }
+        
+        .logo-wrapper { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #1e293b; border: 1px solid #475569; flex-shrink: 0; }
+        .logo-wrapper img { width: 80%; height: 80%; object-fit: contain; }
+        .logo-wrapper span { font-weight: bold; color: var(--accent); font-size: 11px; }
+
+        input { width: 100%; background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; outline: none; padding: 0; }
+        input::placeholder { color: #475569; }
+
+        .search-section { margin-top: 25px; border-top: 1px dashed #334155; padding-top: 20px; }
+        .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        .search-box input { background: var(--card); border: 1px solid #334155 !important; border-radius: 10px; padding: 12px; font-size: 14px; color: white; }
+        .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
+        .delete-btn { color: #ef4444; font-size: 24px; cursor: pointer; padding: 0 5px; }
+        .status-info { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 10px; }
     </style>
 </head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>💱 Calc Kurs Ultra</h2>
+        <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
+    </div>
+
+    <div id="fixed-list">
+        <div class="coin-card" style="border-left: 4px solid #ef4444;">
+            <div class="logo-wrapper"><span>IDR</span></div>
+            <div class="coin-info">
+                <label>IDR (Rupiah)</label>
+                <input type="text" id="idr" inputmode="decimal" placeholder="0" oninput="handleInput('idr')">
+            </div>
+        </div>
+        <div class="coin-card" style="border-left: 4px solid #3b82f6;">
+            <div class="logo-wrapper"><span>USD</span></div>
+            <div class="coin-info">
+                <label>USD (Dollar)</label>
+                <input type="text" id="usd" inputmode="decimal" placeholder="0" oninput="handleInput('usd')">
+            </div>
+        </div>
+        <div class="coin-card" style="border-left: 4px solid #f7931a;">
+            <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/1/large/bitcoin.png"></div>
+            <div class="coin-info">
+                <label>BTC (Bitcoin)</label>
+                <input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')">
+            </div>
+        </div>
+        <div class="coin-card" style="border-left: 4px solid #627eea;">
+            <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png"></div>
+            <div class="coin-info">
+                <label>ETH (Ethereum)</label>
+                <input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="handleInput('eth')">
+            </div>
+        </div>
+    </div>
+
+    <div id="watchlist"></div>
+
+    <div class="search-section">
+        <label style="font-size: 11px; font-weight: bold; color: #94a3b8;">TAMBAH KOIN</label>
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Simbol (sui, sol, doge...)">
+            <button class="add-btn" onclick="addCoin()">Tambah</button>
+        </div>
+        <div id="status" class="status-info">Ready, Bro!</div>
+    </div>
+</div>
+
+<script>
+    // --- 1. REGISTRASI SERVICE WORKER (Biar Bisa Install) ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const blob = new Blob([
+                "self.addEventListener('install', e => self.skipWaiting());" +
+                "self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));"
+            ], { type: 'application/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(blob));
+        });
+    }
+
+    // --- 2. LOGIKA UTAMA ---
+    let usdToIdr = 16250;
