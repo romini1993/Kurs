@@ -20,14 +20,26 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 10; }
         h2 { margin: 0; font-size: 22px; color: var(--accent); }
         .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        
         .coin-card { background: var(--card); border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; }
         .coin-info { flex: 1; }
         .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
-        .coin-card img { width: 30px; height: 30px; border-radius: 50%; }
+        
+        /* FIX LOGO BENDERA: Kasih background putih biar ga kena force dark mode */
+        .flag-icon { 
+            width: 32px; height: 32px; border-radius: 50%; 
+            background: white; border: 2px solid #334155;
+            object-fit: cover;
+            /* Paksa browser jangan ngerubah warna ini */
+            color-scheme: light;
+        }
+
+        .coin-card img { width: 32px; height: 32px; border-radius: 50%; }
+        
         input { width: 100%; background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; outline: none; padding: 0; }
         .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; }
         .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
-        .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; font-size: 14px; color: white; }
+        .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; font-size: 14px; color: white; width: 100%; }
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
         .delete-btn { color: #ef4444; font-size: 24px; cursor: pointer; padding-left: 10px; }
         .status-info { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 10px; }
@@ -43,14 +55,14 @@
 
     <div id="fixed-list">
         <div class="coin-card" style="border-left: 5px solid #ef4444;">
-            <img src="https://flagcdn.com/w80/id.png" alt="idr">
+            <img class="flag-icon" src="https://flagcdn.com/w80/id.png" alt="idr">
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
-                <input type="number" id="idr" placeholder="Masukkan angka..." oninput="calculate('idr')">
+                <input type="number" id="idr" placeholder="Input IDR..." oninput="calculate('idr')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #3b82f6;">
-            <img src="https://flagcdn.com/w80/us.png" alt="usd">
+            <img class="flag-icon" src="https://flagcdn.com/w80/us.png" alt="usd">
             <div class="coin-info">
                 <label>USD (Dollar)</label>
                 <input type="number" id="usd" placeholder="0" oninput="calculate('usd')">
@@ -85,48 +97,44 @@
 </div>
 
 <script>
-    let rates = { usd_idr: 16000 }; // Harga default awal
+    let rates = { usd_idr: 16000 }; 
     let watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
 
     async function fetchPrices() {
         const statusEl = document.getElementById('status');
         statusEl.innerText = "Sabar Bro, lagi update harga...";
-        
         const allIds = ['bitcoin', 'ethereum', ...watchlist].join(',');
         try {
-            // Kita pake fetch biasa, tapi tambahin timestamp biar gak kena cache
-            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${allIds}&vs_currencies=usd,idr&t=${new Date().getTime()}`);
+            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${allIds}&vs_currencies=usd,idr&t=${Date.now()}`);
             const data = await res.json();
-            
             if (data.bitcoin) {
-                const usdToIdr = data.bitcoin.idr / data.bitcoin.usd;
-                rates = { ...data, usd_idr: usdToIdr };
-                statusEl.innerText = "Harga terupdate: " + new Date().toLocaleTimeString();
+                rates = { ...data, usd_idr: data.bitcoin.idr / data.bitcoin.usd };
+                statusEl.innerText = "Terakhir update: " + new Date().toLocaleTimeString();
                 renderWatchlist();
             }
         } catch (e) {
-            statusEl.innerText = "Gagal update. CoinGecko lagi sibuk, coba klik tombol Update lagi bentar.";
+            statusEl.innerText = "Gagal update. Cek internet elu, Bro.";
         }
     }
 
     function calculate(source) {
-        const inputEl = document.getElementById(source);
-        const val = parseFloat(inputEl.value) || 0;
+        const val = parseFloat(document.getElementById(source).value) || 0;
         let baseUsd = 0;
-
         if (source === 'idr') baseUsd = val / rates.usd_idr;
         else if (source === 'usd') baseUsd = val;
         else if (rates[source]) baseUsd = val * rates[source].usd;
 
-        if (source !== 'idr') document.getElementById('idr').value = (baseUsd * rates.usd_idr).toFixed(0);
-        if (source !== 'usd') document.getElementById('usd').value = baseUsd.toFixed(2);
-        if (source !== 'bitcoin') document.getElementById('bitcoin').value = (baseUsd / rates.bitcoin.usd).toFixed(8);
-        if (source !== 'ethereum') document.getElementById('ethereum').value = (baseUsd / rates.ethereum.usd).toFixed(8);
+        const updateVal = (id, v, dec) => {
+            if(id !== source) document.getElementById(id).value = v.toFixed(dec).replace(/\.?0+$/, "");
+        };
+
+        updateVal('idr', baseUsd * rates.usd_idr, 0);
+        updateVal('usd', baseUsd, 2);
+        updateVal('bitcoin', baseUsd / (rates.bitcoin?.usd || 1), 8);
+        updateVal('ethereum', baseUsd / (rates.ethereum?.usd || 1), 8);
 
         watchlist.forEach(id => {
-            if (id !== source && rates[id]) {
-                document.getElementById(id).value = (baseUsd / rates[id].usd).toFixed(8);
-            }
+            if(rates[id]) updateVal(id, baseUsd / rates[id].usd, 8);
         });
     }
 
@@ -134,20 +142,16 @@
         const input = document.getElementById('search-input');
         const id = input.value.toLowerCase().trim();
         if (!id || watchlist.includes(id)) return;
-        
-        document.getElementById('status').innerText = "Ngecek koin...";
         try {
             const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
             const data = await res.json();
-            if (data && data[id]) {
+            if (data[id]) {
                 watchlist.push(id);
                 localStorage.setItem('watchlist', JSON.stringify(watchlist));
                 input.value = "";
-                await fetchPrices();
-            } else {
-                alert("Koin gak ketemu, coba ketik nama lengkap (contoh: solana)");
-            }
-        } catch (e) { alert("API Limit, tunggu bentar Bro!"); }
+                fetchPrices();
+            } else { alert("Koin '" + id + "' gak ketemu."); }
+        } catch (e) { alert("Sabar, lagi limit!"); }
     }
 
     function removeCoin(id) {
@@ -162,14 +166,7 @@
         watchlist.forEach(id => {
             const div = document.createElement('div');
             div.className = "coin-card";
-            div.innerHTML = `
-                <img src="https://assets.coingecko.com/coins/images/placeholder.png" id="img-${id}">
-                <div class="coin-info">
-                    <label>${id.toUpperCase()}</label>
-                    <input type="number" id="${id}" placeholder="0" oninput="calculate('${id}')">
-                </div>
-                <div class="delete-btn" onclick="removeCoin('${id}')">×</div>
-            `;
+            div.innerHTML = `<img src="https://assets.coingecko.com/coins/images/placeholder.png" id="img-${id}"><div class="coin-info"><label>${id.toUpperCase()}</label><input type="number" id="${id}" placeholder="0" oninput="calculate('${id}')"></div><div class="delete-btn" onclick="removeCoin('${id}')">×</div>`;
             container.appendChild(div);
             fetch(`https://api.coingecko.com/api/v3/coins/${id}`).then(r => r.json()).then(d => {
                 document.getElementById(`img-${id}`).src = d.image.small;
