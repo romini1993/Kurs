@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Pro - Ribuan</title>
+    <title>Calc Kurs Pro - Decimal</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -93,7 +93,7 @@
 </div>
 
 <script>
-    let usdToIdr = 16200; 
+    let usdToIdr = 16250; 
     let prices = { btc: 1, eth: 1 };
     let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
 
@@ -101,20 +101,31 @@
         if (el.value === "0") el.value = "";
     }
 
-    // Fungsi canggih buat format titik ribuan
+    // Format buat angka bulet (IDR)
     function formatNumber(n) {
         return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     }
 
+    // Format buat desimal 2 angka (USD)
+    function formatDecimal(n) {
+        let val = parseFloat(n).toFixed(2);
+        let parts = val.split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return parts.join(",");
+    }
+
     function parseNumber(s) {
-        return parseFloat(s.replace(/\./g, "")) || 0;
+        if (!s) return 0;
+        // Hapus titik, ganti koma jadi titik biar bisa dihitung
+        let clean = s.toString().replace(/\./g, "").replace(",", ".");
+        return parseFloat(clean) || 0;
     }
 
     async function getPrice(symbol) {
         try {
             const res = await fetch(`https://cryptoprices.cc/${symbol.toUpperCase()}`);
             const text = await res.text();
-            return parseFloat(text) || 0;
+            return parseFloat(text.trim()) || 0;
         } catch (e) { return 0; }
     }
 
@@ -128,14 +139,6 @@
     }
 
     function handleInput(source) {
-        const el = document.getElementById(source);
-        let rawVal = el.value;
-
-        // Kalau IDR/USD, kita kasih format titik pas ngetik
-        if (source === 'idr' || source === 'usd') {
-            el.value = formatNumber(rawVal);
-        }
-
         calculate(source);
     }
 
@@ -146,16 +149,17 @@
 
         if (source === 'idr') baseUsd = val / usdToIdr;
         else if (source === 'usd') baseUsd = val;
-        else baseUsd = parseFloat(el.value) * (prices[source] || 0);
+        else baseUsd = val * (prices[source] || 0);
 
-        // Update IDR
+        // Update IDR (Bulet)
         if (source !== 'idr') {
-            document.getElementById('idr').value = formatNumber(Math.round(baseUsd * usdToIdr).toString());
+            let idrFinal = Math.round(baseUsd * usdToIdr).toString();
+            document.getElementById('idr').value = idrFinal.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
-        // Update USD
+        // Update USD (Desimal 2 angka)
         if (source !== 'usd') {
-            document.getElementById('usd').value = formatNumber(Math.round(baseUsd).toString());
+            document.getElementById('usd').value = formatDecimal(baseUsd);
         }
 
         // Update Crypto
