@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs</title>
+    <title>Calc Kurs Pro</title>
     <link rel="manifest" href="manifest-kurs.json">
     <style>
         :root {
@@ -28,17 +28,17 @@
         h2 { margin: 0; font-size: 22px; color: var(--accent); }
         .refresh-btn { 
             background: var(--card); border: 1px solid var(--accent); color: var(--accent);
-            padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 12px;
+            padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold;
         }
 
         .coin-card {
             background: var(--card); border-radius: 16px; padding: 12px 16px;
             margin-bottom: 12px; display: flex; align-items: center; gap: 12px;
-            border: 1px solid #334155;
+            border: 1px solid #334155; transition: 0.3s;
         }
         .coin-info { flex: 1; }
         .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
-        .coin-card img { width: 32px; height: 32px; border-radius: 50%; }
+        .coin-card img { width: 35px; height: 35px; border-radius: 50%; }
         
         input {
             width: 100%; background: transparent; border: none; color: white;
@@ -46,17 +46,15 @@
         }
 
         .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; }
-        .search-box {
-            display: flex; gap: 8px; margin-bottom: 15px;
-        }
+        .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
         .search-box input {
             background: var(--card); border: 1px solid #334155; border-radius: 10px;
-            padding: 10px; font-size: 14px;
+            padding: 12px; font-size: 14px; color: white;
         }
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
 
-        .delete-btn { color: #ef4444; font-size: 20px; cursor: pointer; padding-left: 10px; }
-        .loading { font-size: 12px; color: #94a3b8; text-align: center; }
+        .delete-btn { color: #ef4444; font-size: 24px; cursor: pointer; padding-left: 10px; line-height: 1; }
+        .status-info { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -64,32 +62,32 @@
 <div class="container">
     <div class="header">
         <h2>💱 Calc Kurs</h2>
-        <button class="refresh-btn" onclick="fetchPrices()">🔄 Update Harga</button>
+        <button class="refresh-btn" onclick="fetchPrices()">🔄 Update</button>
     </div>
 
     <div id="fixed-list">
-        <div class="coin-card" style="border-left: 4px solid #22c55e;">
+        <div class="coin-card" style="border-left: 5px solid #22c55e;">
             <img src="https://cdn-icons-png.flaticon.com/512/5329/5329352.png" alt="idr">
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
                 <input type="number" id="idr" placeholder="0" oninput="calculate('idr')">
             </div>
         </div>
-        <div class="coin-card" style="border-left: 4px solid #3b82f6;">
+        <div class="coin-card" style="border-left: 5px solid #3b82f6;">
             <img src="https://cdn-icons-png.flaticon.com/512/10758/10758014.png" alt="usd">
             <div class="coin-info">
                 <label>USD (Dollar)</label>
                 <input type="number" id="usd" placeholder="0" oninput="calculate('usd')">
             </div>
         </div>
-        <div class="coin-card" style="border-left: 4px solid var(--btc);">
+        <div class="coin-card" style="border-left: 5px solid var(--btc);">
             <img src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" alt="btc">
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
                 <input type="number" id="bitcoin" placeholder="0" oninput="calculate('bitcoin')">
             </div>
         </div>
-        <div class="coin-card" style="border-left: 4px solid var(--eth);">
+        <div class="coin-card" style="border-left: 5px solid var(--eth);">
             <img src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="eth">
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
@@ -103,10 +101,10 @@
     <div class="search-section">
         <label>TAMBAH KOIN LAIN</label>
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Contoh: solana, dogecoin, xrp...">
+            <input type="text" id="search-input" placeholder="Ketik: solana, dogecoin, xrp...">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
-        <div id="status" class="loading">Harga terupdate otomatis</div>
+        <div id="status" class="status-info">Memuat harga terbaru...</div>
     </div>
 </div>
 
@@ -114,72 +112,95 @@
     let rates = {};
     let watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
 
+    // 1. Ambil harga dari API
     async function fetchPrices() {
-        document.getElementById('status').innerText = "Updating...";
-        const coinIds = ['bitcoin', 'ethereum', ...watchlist].join(',');
+        const statusEl = document.getElementById('status');
+        statusEl.innerText = "Sabar Bro, lagi update harga...";
+        
+        const allIds = ['bitcoin', 'ethereum', ...watchlist].join(',');
         try {
-            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd,idr&include_last_updated_at=true`);
+            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${allIds}&vs_currencies=usd,idr`);
             const data = await res.json();
             
-            // Get USD/IDR rate (approx)
+            // Itung patokan USD ke IDR dari Bitcoin
             const usdToIdr = data.bitcoin.idr / data.bitcoin.usd;
             rates = { ...data, usd_idr: usdToIdr };
             
             renderWatchlist();
-            document.getElementById('status').innerText = "Harga terbaru berhasil dimuat!";
+            statusEl.innerText = "Harga terupdate! Terakhir cek: " + new Date().toLocaleTimeString();
         } catch (e) {
-            document.getElementById('status').innerText = "Gagal update harga.";
+            statusEl.innerText = "Gagal ambil data. Cek koneksi atau tunggu 10 detik.";
         }
     }
 
+    // 2. Logika Hitung Otomatis
     function calculate(source) {
+        if (!rates.bitcoin) return; // Tunggu data siap
+
         const val = parseFloat(document.getElementById(source).value) || 0;
         let baseUsd = 0;
 
+        // Cari nilai dasar dalam USD
         if (source === 'idr') baseUsd = val / rates.usd_idr;
         else if (source === 'usd') baseUsd = val;
-        else baseUsd = val * rates[source].usd;
+        else if (rates[source]) baseUsd = val * rates[source].usd;
 
-        // Update fixed
-        if (source !== 'idr') document.getElementById('idr').value = (baseUsd * rates.usd_idr).toFixed(0);
-        if (source !== 'usd') document.getElementById('usd').value = baseUsd.toFixed(2);
-        if (source !== 'bitcoin') document.getElementById('bitcoin').value = (baseUsd / rates.bitcoin.usd).toFixed(8);
-        if (source !== 'ethereum') document.getElementById('ethereum').value = (baseUsd / rates.ethereum.usd).toFixed(8);
+        // Update semua input selain yang lagi diketik
+        updateInput('idr', (baseUsd * rates.usd_idr), 0, source);
+        updateInput('usd', baseUsd, 2, source);
+        updateInput('bitcoin', (baseUsd / rates.bitcoin.usd), 8, source);
+        updateInput('ethereum', (baseUsd / rates.ethereum.usd), 8, source);
 
-        // Update watchlist
         watchlist.forEach(id => {
-            if (source !== id) {
-                document.getElementById(id).value = (baseUsd / rates[id].usd).toFixed(8);
+            if (rates[id]) {
+                updateInput(id, (baseUsd / rates[id].usd), 8, source);
             }
         });
     }
 
+    function updateInput(id, value, decimal, source) {
+        if (id !== source) {
+            const el = document.getElementById(id);
+            if (el) el.value = value.toFixed(decimal).replace(/\.?0+$/, "");
+        }
+    }
+
+    // 3. Tambah Koin Baru
     async function addCoin() {
-        const id = document.getElementById('search-input').value.toLowerCase().trim();
+        const input = document.getElementById('search-input');
+        const id = input.value.toLowerCase().trim();
+        
         if (!id || watchlist.includes(id)) return;
 
         try {
-            const res = await fetch(`https://api.coingecko.com/api/v3/coins/${id}`);
-            if (res.status === 200) {
+            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
+            const data = await res.json();
+            
+            if (data && Object.keys(data).length > 0) {
                 watchlist.push(id);
                 localStorage.setItem('watchlist', JSON.stringify(watchlist));
-                document.getElementById('search-input').value = "";
+                input.value = "";
                 await fetchPrices();
             } else {
-                alert("Koin nggak ketemu, Bro. Cek lagi namanya (pake id coingecko).");
+                alert("Koin '" + id + "' nggak ketemu, Bro. Cek lagi ejaannya.");
             }
-        } catch (e) { alert("Error nyari koin."); }
+        } catch (e) {
+            alert("Sabar, lagi limit API. Tunggu bentar terus coba lagi.");
+        }
     }
 
+    // 4. Hapus Koin
     function removeCoin(id) {
         watchlist = watchlist.filter(item => item !== id);
         localStorage.setItem('watchlist', JSON.stringify(watchlist));
         renderWatchlist();
     }
 
+    // 5. Render Daftar Watchlist
     function renderWatchlist() {
         const container = document.getElementById('watchlist');
         container.innerHTML = "";
+        
         watchlist.forEach(id => {
             const div = document.createElement('div');
             div.className = "coin-card";
@@ -192,14 +213,18 @@
                 <div class="delete-btn" onclick="removeCoin('${id}')">×</div>
             `;
             container.appendChild(div);
-            // Ambil logo asli
-            fetch(`https://api.coingecko.com/api/v3/coins/${id}`).then(r => r.json()).then(d => {
-                document.getElementById(`img-${id}`).src = d.image.small;
-            });
+
+            // Ambil Ikon Asli
+            fetch(`https://api.coingecko.com/api/v3/coins/${id}?tickers=false&market_data=false`)
+                .then(r => r.json())
+                .then(d => {
+                    document.getElementById(`img-${id}`).src = d.image.small;
+                }).catch(() => {});
         });
     }
 
     fetchPrices();
 </script>
+
 </body>
 </html>
