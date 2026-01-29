@@ -13,34 +13,55 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f172a">
 
-    <title>Calc Kurs Ultra - Full Logo</title>
+    <title>Calc Kurs Pro Design</title>
     <style>
         :root {
             --bg: #0f172a;
             --card: #1e293b;
             --accent: #38bdf8;
             --text: #f8fafc;
-            --btc: #f7931a;
-            --eth: #627eea;
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); margin: 0; padding: env(safe-area-inset-top) 20px 20px 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 400px; }
+        
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 10; }
         h2 { margin: 0; font-size: 22px; color: var(--accent); }
         .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
         
-        .coin-card { background: var(--card); border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; transition: 0.3s; }
-        .coin-card:active { transform: scale(0.98); }
-        .coin-info { flex: 1; }
-        .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
+        /* Gaya Kartu Pro yang lu suka */
+        .coin-card { 
+            background: var(--card); 
+            border-radius: 16px; 
+            padding: 14px 18px; 
+            margin-bottom: 12px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border: 1px solid #334155; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
         
-        /* Logo Styling - Seragam Semua */
-        .logo-wrapper { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #0f172a; border: 2px solid #334155; flex-shrink: 0; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        .coin-info { flex: 1; }
+        .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 2px; }
+        
+        /* Logo Fix - Pake API yang bener */
+        .logo-wrapper { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            overflow: hidden; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: #0f172a; 
+            border: 1px solid #475569; 
+            flex-shrink: 0; 
+        }
         .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-        .logo-wrapper span { font-weight: bold; color: var(--accent); font-size: 12px; }
 
-        input { width: 100%; background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; outline: none; padding: 0; }
+        input { width: 100%; background: transparent; border: none; color: white; font-size: 20px; font-weight: bold; outline: none; padding: 0; }
+        
         .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; padding-bottom: 50px; }
         .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
         .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; font-size: 14px; color: white; width: 100%; }
@@ -60,7 +81,7 @@
     <div id="fixed-list">
         <div class="coin-card" style="border-left: 5px solid #ef4444;">
             <div class="logo-wrapper">
-                <img src="https://flagcdn.com/w80/id.png" alt="IDR">
+                <img src="https://api.iconify.design/emojione:flag-for-indonesia.svg" alt="IDR">
             </div>
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
@@ -69,21 +90,21 @@
         </div>
         <div class="coin-card" style="border-left: 5px solid #3b82f6;">
             <div class="logo-wrapper">
-                <img src="https://flagcdn.com/w80/us.png" alt="USD">
+                <img src="https://api.iconify.design/emojione:flag-for-united-states.svg" alt="USD">
             </div>
             <div class="coin-info">
                 <label>USD (Dollar)</label>
                 <input type="text" id="usd" inputmode="decimal" value="0" onfocus="clearZero(this)" oninput="formatAndCalc('usd', 2)">
             </div>
         </div>
-        <div class="coin-card" style="border-left: 5px solid var(--btc);">
+        <div class="coin-card" style="border-left: 5px solid #f7931a;">
             <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/1/large/bitcoin.png"></div>
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
                 <input type="text" id="btc" inputmode="decimal" value="0" onfocus="clearZero(this)" oninput="formatAndCalc('btc', 8)">
             </div>
         </div>
-        <div class="coin-card" style="border-left: 5px solid var(--eth);">
+        <div class="coin-card" style="border-left: 5px solid #627eea;">
             <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png"></div>
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
@@ -95,7 +116,7 @@
     <div id="watchlist"></div>
 
     <div class="search-section">
-        <label>TAMBAH KOIN (Simbol)</label>
+        <label style="font-size: 11px; font-weight: bold; color: #94a3b8;">TAMBAH KOIN</label>
         <div class="search-box">
             <input type="text" id="search-input" placeholder="Contoh: sui, sol, doge...">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
@@ -107,13 +128,9 @@
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            const swCode = `
-                self.addEventListener('install', e => self.skipWaiting());
-                self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
-            `;
+            const swCode = `self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));`;
             const blob = new Blob([swCode], {type: 'application/javascript'});
-            const url = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(url);
+            navigator.serviceWorker.register(URL.createObjectURL(blob));
         });
     }
 
@@ -127,35 +144,16 @@
             'sol': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
             'doge': 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png',
             'xrp': 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
-            'bnb': 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
-            'ada': 'https://assets.coingecko.com/coins/images/975/large/cardano.png',
-            'matic': 'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon_2x.png',
-            'dot': 'https://assets.coingecko.com/coins/images/12171/large/polkadot.png',
-            'trx': 'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png',
-            'avax': 'https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png'
+            'bnb': 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png'
         };
         const s = sym.toLowerCase();
-        if(mapping[s]) return mapping[s];
-        return `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${s}.png`;
+        return mapping[s] || `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${s}.png`;
     }
 
-    function clearZero(el) {
-        if (el.value === "0") el.value = "";
-    }
-
-    function cleanInput(str) {
-        let clean = str.replace(/[^0-9.]/g, '');
-        let parts = clean.split('.');
-        if (parts.length > 2) clean = parts[0] + '.' + parts.slice(1).join('');
-        return clean;
-    }
+    function clearZero(el) { if (el.value === "0") el.value = ""; }
 
     function toUS(val, dec) {
-        if (isNaN(val)) return "0";
-        return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: dec
-        }).format(val);
+        return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: dec }).format(val);
     }
 
     async function getPrice(symbol) {
@@ -177,25 +175,17 @@
 
     function formatAndCalc(source, decLimit) {
         let el = document.getElementById(source);
-        let raw = cleanInput(el.value);
-        let val = parseFloat(raw) || 0;
-        if (!el.value.endsWith('.')) {
-            el.value = toUS(val, decLimit);
-        }
+        let val = parseFloat(el.value.replace(/,/g, '')) || 0;
+        if (!el.value.endsWith('.')) el.value = toUS(val, decLimit);
         calculate(source, val);
     }
 
     function calculate(source, val) {
-        let baseUsd = 0;
-        if (source === 'idr') baseUsd = val / usdToIdr;
-        else if (source === 'usd') baseUsd = val;
-        else baseUsd = val * (prices[source] || 0);
-
+        let baseUsd = (source === 'idr') ? val / usdToIdr : (source === 'usd' ? val : val * (prices[source] || 0));
         if (source !== 'idr') document.getElementById('idr').value = toUS(baseUsd * usdToIdr, 0);
         if (source !== 'usd') document.getElementById('usd').value = toUS(baseUsd, 2);
         if (source !== 'btc') document.getElementById('btc').value = toUS(baseUsd / (prices.btc || 1), 8);
         if (source !== 'eth') document.getElementById('eth').value = toUS(baseUsd / (prices.eth || 1), 8);
-
         watchlist.forEach(sym => {
             if (sym !== source) {
                 let target = document.getElementById(sym);
