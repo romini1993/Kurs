@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Pro</title>
+    <title>Calc Kurs Pro - Ribuan</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -24,9 +24,6 @@
         .coin-info { flex: 1; }
         .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
         
-        /* Format Ribuan Label */
-        .format-label { display: block; font-size: 12px; color: var(--accent); font-weight: normal; margin-top: 2px; height: 15px; }
-
         .symbol-icon { 
             width: 35px; height: 35px; border-radius: 10px; 
             background: #334155; color: var(--accent);
@@ -48,7 +45,7 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs Fast</h2>
+        <h2>💱 Calc Kurs Pro</h2>
         <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
@@ -57,32 +54,28 @@
             <div class="symbol-icon">Rp</div>
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
-                <input type="number" id="idr" value="0" onfocus="clearZero(this)" oninput="calculate('idr')">
-                <span id="label-idr" class="format-label">Rp 0</span>
+                <input type="text" id="idr" value="0" onfocus="clearZero(this)" oninput="handleInput('idr')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #3b82f6;">
             <div class="symbol-icon">$</div>
             <div class="coin-info">
                 <label>USD (Dollar)</label>
-                <input type="number" id="usd" value="0" onfocus="clearZero(this)" oninput="calculate('usd')">
-                <span id="label-usd" class="format-label">$ 0</span>
+                <input type="text" id="usd" value="0" onfocus="clearZero(this)" oninput="handleInput('usd')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--btc);">
             <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=035" alt="btc">
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
-                <input type="number" id="btc" value="0" onfocus="clearZero(this)" oninput="calculate('btc')">
-                <span class="format-label"></span>
+                <input type="text" id="btc" value="0" onfocus="clearZero(this)" oninput="handleInput('btc')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--eth);">
             <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png?v=035" alt="eth">
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
-                <input type="number" id="eth" value="0" onfocus="clearZero(this)" oninput="calculate('eth')">
-                <span class="format-label"></span>
+                <input type="text" id="eth" value="0" onfocus="clearZero(this)" oninput="handleInput('eth')">
             </div>
         </div>
     </div>
@@ -105,22 +98,16 @@
     let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
 
     function clearZero(el) {
-        if (el.value == "0") el.value = "";
+        if (el.value === "0") el.value = "";
     }
 
-    // Fungsi buat format ribuan
-    function formatRibuan(angka, prefix) {
-        let number_string = angka.toFixed(0).toString(),
-            split = number_string.split('.'),
-            sisa = split[0].length % 3,
-            rupiah = split[0].substr(0, sisa),
-            ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+    // Fungsi canggih buat format titik ribuan
+    function formatNumber(n) {
+        return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
 
-        if (ribuan) {
-            let separator = sisa ? '.' : '';
-            rupiah += separator + ribuan.join('.');
-        }
-        return prefix + rupiah;
+    function parseNumber(s) {
+        return parseFloat(s.replace(/\./g, "")) || 0;
     }
 
     async function getPrice(symbol) {
@@ -140,29 +127,42 @@
         document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
 
+    function handleInput(source) {
+        const el = document.getElementById(source);
+        let rawVal = el.value;
+
+        // Kalau IDR/USD, kita kasih format titik pas ngetik
+        if (source === 'idr' || source === 'usd') {
+            el.value = formatNumber(rawVal);
+        }
+
+        calculate(source);
+    }
+
     function calculate(source) {
-        const inputEl = document.getElementById(source);
-        const val = parseFloat(inputEl.value) || 0;
+        const el = document.getElementById(source);
+        const val = parseNumber(el.value);
         let baseUsd = 0;
 
         if (source === 'idr') baseUsd = val / usdToIdr;
         else if (source === 'usd') baseUsd = val;
-        else baseUsd = val * (prices[source] || 0);
+        else baseUsd = parseFloat(el.value) * (prices[source] || 0);
 
         // Update IDR
-        const idrVal = baseUsd * usdToIdr;
-        if(source !== 'idr') document.getElementById('idr').value = idrVal.toFixed(0);
-        document.getElementById('label-idr').innerText = formatRibuan(idrVal, 'Rp ');
+        if (source !== 'idr') {
+            document.getElementById('idr').value = formatNumber(Math.round(baseUsd * usdToIdr).toString());
+        }
 
         // Update USD
-        if(source !== 'usd') document.getElementById('usd').value = baseUsd.toFixed(2);
-        document.getElementById('label-usd').innerText = '$ ' + baseUsd.toLocaleString('en-US');
+        if (source !== 'usd') {
+            document.getElementById('usd').value = formatNumber(Math.round(baseUsd).toString());
+        }
 
         // Update Crypto
         const updateCrypto = (id, p) => {
             if(id !== source) {
-                const el = document.getElementById(id);
-                if(el) el.value = (baseUsd / (p || 1)).toFixed(8).replace(/\.?0+$/, "");
+                const target = document.getElementById(id);
+                if(target) target.value = (baseUsd / (p || 1)).toFixed(8).replace(/\.?0+$/, "");
             }
         };
 
@@ -197,7 +197,7 @@
         watchlist.forEach(sym => {
             const div = document.createElement('div');
             div.className = "coin-card";
-            div.innerHTML = `<div class="symbol-icon" style="font-size:10px">${sym}</div><div class="coin-info"><label>${sym}</label><input type="number" id="${sym}" value="0" onfocus="clearZero(this)" oninput="calculate('${sym}')"></div><div class="delete-btn" onclick="removeCoin('${sym}')">×</div>`;
+            div.innerHTML = `<div class="symbol-icon" style="font-size:10px">${sym}</div><div class="coin-info"><label>${sym}</label><input type="text" id="${sym}" value="0" onfocus="clearZero(this)" oninput="handleInput('${sym}')"></div><div class="delete-btn" onclick="removeCoin('${sym}')">×</div>`;
             container.appendChild(div);
         });
     }
