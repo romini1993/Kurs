@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <link rel="manifest" href="manifest-kurs.json">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
-    
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f172a">
-    <title>Calc Kurs Ultra</title>
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2311/2311905.png">
+    
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Calc Kurs Ultra","short_name":"CalcKurs","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2311/2311905.png","sizes":"512x512","type":"image/png"}]}'>
 
+    <title>Calc Kurs Ultra</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -22,7 +22,7 @@
             --text: #f8fafc;
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); margin: 0; padding: env(safe-area-inset-top) 20px 20px 20px; display: flex; justify-content: center; overflow-x: hidden; }
+        body { background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; overflow-x: hidden; }
         .container { width: 100%; max-width: 400px; padding-bottom: 40px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 20; }
         h2 { margin: 0; font-size: 20px; color: var(--accent); }
@@ -51,7 +51,7 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs Ultra</h2>
+        <h2>💱 Calc Kurs Fast</h2>
         <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
@@ -99,24 +99,12 @@
 </div>
 
 <script>
-    // --- 1. REGISTRASI SERVICE WORKER (Biar Bisa Install) ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            const blob = new Blob([
-                "self.addEventListener('install', e => self.skipWaiting());" +
-                "self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));"
-            ], { type: 'application/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(blob));
-        });
-    }
-
-    // --- 2. LOGIKA UTAMA ---
     let usdToIdr = 16250; 
     let prices = { btc: 1, eth: 1 };
     let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
 
     function formatUS(val, dec) {
-        if (val === 0 && !document.activeElement?.value) return "";
+        if (val === 0 && !document.activeElement.value) return "";
         return new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 0,
             maximumFractionDigits: dec
@@ -136,7 +124,9 @@
         document.getElementById('status').innerText = "Updating...";
         prices.btc = await getPrice('BTC');
         prices.eth = await getPrice('ETH');
-        for (let sym of watchlist) { prices[sym] = await getPrice(sym); }
+        for (let sym of watchlist) {
+            prices[sym] = await getPrice(sym);
+        }
         renderWatchlist();
         document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
@@ -144,10 +134,16 @@
     function handleInput(source) {
         const el = document.getElementById(source);
         let raw = el.value.replace(/[^0-9.]/g, '');
+        
+        // Cek kalau user lagi ngetik desimal
         if (el.value.endsWith('.')) return; 
+
         const val = parseFloat(raw) || 0;
+        
+        // Update tampilan input yang lagi diketik (koma ribuan)
         const decLimit = (source === 'btc' || source === 'eth') ? 8 : (source === 'idr' ? 0 : 5);
         el.value = formatUS(val, decLimit);
+
         calculate(source, val);
     }
 
@@ -181,7 +177,8 @@
             localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
             input.value = "";
             renderWatchlist();
-        } else { alert("Simbol gak ketemu."); }
+            calculate('usd', parsePure(document.getElementById('usd').value));
+        } else { alert("Simbol " + sym + " gak ketemu."); }
     }
 
     function removeCoin(sym) {
@@ -189,6 +186,8 @@
         localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
         renderWatchlist();
     }
+
+    function parsePure(str) { return parseFloat(str.replace(/,/g, '')) || 0; }
 
     function renderWatchlist() {
         const container = document.getElementById('watchlist');
