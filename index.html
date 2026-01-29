@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Pro - International Standard</title>
+    <title>Calc Kurs Pro - Ultra</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -45,7 +45,7 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs Fast</h2>
+        <h2>💱 Calc Kurs Ultra</h2>
         <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
@@ -54,28 +54,28 @@
             <div class="symbol-icon">Rp</div>
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
-                <input type="text" id="idr" value="0" onfocus="clearZero(this)" oninput="handleInput('idr')">
+                <input type="text" id="idr" value="0" onfocus="clearZero(this)" oninput="formatAndCalc('idr', 0)">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #3b82f6;">
             <div class="symbol-icon">$</div>
             <div class="coin-info">
                 <label>USD (Dollar)</label>
-                <input type="text" id="usd" value="0" onfocus="clearZero(this)" oninput="handleInput('usd')">
+                <input type="text" id="usd" value="0" onfocus="clearZero(this)" oninput="formatAndCalc('usd', 2)">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--btc);">
             <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=035" alt="btc">
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
-                <input type="text" id="btc" value="0" onfocus="clearZero(this)" oninput="handleInput('btc')">
+                <input type="text" id="btc" value="0" onfocus="clearZero(this)" oninput="formatAndCalc('btc', 8)">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--eth);">
             <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png?v=035" alt="eth">
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
-                <input type="text" id="eth" value="0" onfocus="clearZero(this)" oninput="handleInput('eth')">
+                <input type="text" id="eth" value="0" onfocus="clearZero(this)" oninput="formatAndCalc('eth', 8)">
             </div>
         </div>
     </div>
@@ -98,21 +98,26 @@
     let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
 
     function clearZero(el) {
-        if (el.value === "0") el.value = "";
+        if (el.value === "0" || el.value === "0.00") el.value = "";
     }
 
-    // Fungsi format US (Ribuan koma, desimal titik)
-    function toUSFormat(val, dec) {
+    // Fungsi canggih: Bersihin input tapi tetep jaga titik desimal
+    function cleanInput(str) {
+        // Hapus semua kecuali angka dan titik
+        let clean = str.replace(/[^0-9.]/g, '');
+        // Cegah ada dua titik desimal
+        let parts = clean.split('.');
+        if (parts.length > 2) clean = parts[0] + '.' + parts.slice(1).join('');
+        return clean;
+    }
+
+    // Format tampilan ke US (Ribuan koma, Desimal titik)
+    function toUS(val, dec) {
+        if (isNaN(val)) return "0";
         return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: dec,
+            minimumFractionDigits: 0,
             maximumFractionDigits: dec
         }).format(val);
-    }
-
-    // Ambil angka murni dari format US (Hapus koma)
-    function toPureNumber(s) {
-        if (!s) return 0;
-        return parseFloat(s.toString().replace(/,/g, '')) || 0;
     }
 
     async function getPrice(symbol) {
@@ -132,9 +137,17 @@
         document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
 
-    function handleInput(source) {
+    function formatAndCalc(source, decLimit) {
         let el = document.getElementById(source);
-        let val = toPureNumber(el.value);
+        let raw = cleanInput(el.value);
+        let val = parseFloat(raw) || 0;
+
+        // Terapkan koma ribuan langsung pas ngetik di kolom aktif
+        // Tapi jangan ganggu kalau user lagi ngetik desimal (ada titik di akhir)
+        if (!el.value.endsWith('.')) {
+            el.value = toUS(val, decLimit);
+        }
+
         calculate(source, val);
     }
 
@@ -145,26 +158,21 @@
         else if (source === 'usd') baseUsd = val;
         else baseUsd = val * (prices[source] || 0);
 
-        // Update IDR (Ribuan koma, 0 desimal)
-        if (source !== 'idr') {
-            document.getElementById('idr').value = toUSFormat(baseUsd * usdToIdr, 0);
-        }
-        // Update USD (Ribuan koma, 2 desimal titik)
-        if (source !== 'usd') {
-            document.getElementById('usd').value = toUSFormat(baseUsd, 2);
-        }
+        // Update IDR
+        if (source !== 'idr') document.getElementById('idr').value = toUS(baseUsd * usdToIdr, 0);
+        // Update USD
+        if (source !== 'usd') document.getElementById('usd').value = toUS(baseUsd, 2);
+        // Update Fixed Crypto (BTC & ETH kuncian 8 desimal)
+        if (source !== 'btc') document.getElementById('btc').value = toUS(baseUsd / (prices.btc || 1), 8);
+        if (source !== 'eth') document.getElementById('eth').value = toUS(baseUsd / (prices.eth || 1), 8);
 
-        // Update Crypto
-        const updateCrypto = (id, p) => {
-            if(id !== source) {
-                const target = document.getElementById(id);
-                if(target) target.value = (baseUsd / (p || 1)).toFixed(8).replace(/\.?0+$/, "");
+        // Update Watchlist (Koin tambahan 5 desimal)
+        watchlist.forEach(sym => {
+            if (sym !== source) {
+                let target = document.getElementById(sym);
+                if (target) target.value = toUS(baseUsd / (prices[sym] || 1), 5);
             }
-        };
-
-        updateCrypto('btc', prices.btc);
-        updateCrypto('eth', prices.eth);
-        watchlist.forEach(sym => updateCrypto(sym, prices[sym]));
+        });
     }
 
     async function addCoin() {
@@ -193,7 +201,14 @@
         watchlist.forEach(sym => {
             const div = document.createElement('div');
             div.className = "coin-card";
-            div.innerHTML = `<div class="symbol-icon" style="font-size:10px">${sym}</div><div class="coin-info"><label>${sym}</label><input type="text" id="${sym}" value="0" onfocus="clearZero(this)" oninput="handleInput('${sym}')"></div><div class="delete-btn" onclick="removeCoin('${sym}')">×</div>`;
+            div.innerHTML = `
+                <div class="symbol-icon" style="font-size:10px">${sym}</div>
+                <div class="coin-info">
+                    <label>${sym}</label>
+                    <input type="text" id="${sym}" value="0" onfocus="clearZero(this)" oninput="formatAndCalc('${sym}', 5)">
+                </div>
+                <div class="delete-btn" onclick="removeCoin('${sym}')">×</div>
+            `;
             container.appendChild(div);
         });
     }
