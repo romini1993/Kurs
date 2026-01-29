@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Pro - Ribuan</title>
+    <title>Calc Kurs Pro - Decimal</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -45,7 +45,7 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs Pro</h2>
+        <h2>💱 Calc Kurs Fast</h2>
         <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
@@ -93,116 +93,6 @@
 </div>
 
 <script>
-    let usdToIdr = 16200; 
+    let usdToIdr = 16250; // Bisa elu update manual atau nanti otomatis
     let prices = { btc: 1, eth: 1 };
-    let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
-
-    function clearZero(el) {
-        if (el.value === "0") el.value = "";
-    }
-
-    // Fungsi canggih buat format titik ribuan
-    function formatNumber(n) {
-        return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    }
-
-    function parseNumber(s) {
-        return parseFloat(s.replace(/\./g, "")) || 0;
-    }
-
-    async function getPrice(symbol) {
-        try {
-            const res = await fetch(`https://cryptoprices.cc/${symbol.toUpperCase()}`);
-            const text = await res.text();
-            return parseFloat(text) || 0;
-        } catch (e) { return 0; }
-    }
-
-    async function fetchAllPrices() {
-        document.getElementById('status').innerText = "Updating...";
-        prices.btc = await getPrice('BTC');
-        prices.eth = await getPrice('ETH');
-        for (let sym of watchlist) prices[sym] = await getPrice(sym);
-        renderWatchlist();
-        document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
-    }
-
-    function handleInput(source) {
-        const el = document.getElementById(source);
-        let rawVal = el.value;
-
-        // Kalau IDR/USD, kita kasih format titik pas ngetik
-        if (source === 'idr' || source === 'usd') {
-            el.value = formatNumber(rawVal);
-        }
-
-        calculate(source);
-    }
-
-    function calculate(source) {
-        const el = document.getElementById(source);
-        const val = parseNumber(el.value);
-        let baseUsd = 0;
-
-        if (source === 'idr') baseUsd = val / usdToIdr;
-        else if (source === 'usd') baseUsd = val;
-        else baseUsd = parseFloat(el.value) * (prices[source] || 0);
-
-        // Update IDR
-        if (source !== 'idr') {
-            document.getElementById('idr').value = formatNumber(Math.round(baseUsd * usdToIdr).toString());
-        }
-
-        // Update USD
-        if (source !== 'usd') {
-            document.getElementById('usd').value = formatNumber(Math.round(baseUsd).toString());
-        }
-
-        // Update Crypto
-        const updateCrypto = (id, p) => {
-            if(id !== source) {
-                const target = document.getElementById(id);
-                if(target) target.value = (baseUsd / (p || 1)).toFixed(8).replace(/\.?0+$/, "");
-            }
-        };
-
-        updateCrypto('btc', prices.btc);
-        updateCrypto('eth', prices.eth);
-        watchlist.forEach(sym => updateCrypto(sym, prices[sym]));
-    }
-
-    async function addCoin() {
-        const input = document.getElementById('search-input');
-        const sym = input.value.toUpperCase().trim();
-        if (!sym || watchlist.includes(sym)) return;
-        const p = await getPrice(sym);
-        if (p > 0) {
-            watchlist.push(sym);
-            prices[sym] = p;
-            localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
-            input.value = "";
-            renderWatchlist();
-        } else { alert("Simbol gak ketemu."); }
-    }
-
-    function removeCoin(sym) {
-        watchlist = watchlist.filter(s => s !== sym);
-        localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
-        renderWatchlist();
-    }
-
-    function renderWatchlist() {
-        const container = document.getElementById('watchlist');
-        container.innerHTML = "";
-        watchlist.forEach(sym => {
-            const div = document.createElement('div');
-            div.className = "coin-card";
-            div.innerHTML = `<div class="symbol-icon" style="font-size:10px">${sym}</div><div class="coin-info"><label>${sym}</label><input type="text" id="${sym}" value="0" onfocus="clearZero(this)" oninput="handleInput('${sym}')"></div><div class="delete-btn" onclick="removeCoin('${sym}')">×</div>`;
-            container.appendChild(div);
-        });
-    }
-
-    window.onload = fetchAllPrices;
-</script>
-</body>
-</html>
+    let watchlist
