@@ -18,17 +18,20 @@
         .container { width: 100%; max-width: 400px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         h2 { margin: 0; font-size: 22px; color: var(--accent); }
-        .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 12px; }
         
         .coin-card { background: var(--card); border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; }
         .coin-info { flex: 1; }
         .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
         
+        /* Hasil Format Ribuan */
+        .result-view { display: block; font-size: 13px; color: var(--accent); margin-top: 4px; font-weight: normal; min-height: 18px; }
+
         .symbol-icon { width: 35px; height: 35px; border-radius: 10px; background: #334155; color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid #475569; }
         .coin-card img { width: 35px; height: 35px; border-radius: 50%; }
         
-        input { width: 100%; background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; outline: none; }
-        .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; }
+        input { width: 100%; background: transparent; border: none; color: white; font-size: 20px; font-weight: bold; outline: none; }
+        .search-section { margin-top: 20px; border-top: 1px dashed #334155; padding-top: 20px; }
         .search-box { display: flex; gap: 8px; }
         .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; font-size: 14px; color: white; }
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; }
@@ -40,99 +43,26 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs</h2>
-        <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
+        <h2>💱 Calc Kurs Fast</h2>
+        <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update Harga</button>
     </div>
 
-    <div id="fixed-list">
+    <div id="main-list">
         <div class="coin-card" style="border-left: 5px solid #ef4444;">
             <div class="symbol-icon">Rp</div>
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
-                <input type="text" id="idr" value="0" onfocus="doFocus(this)" onblur="doBlur(this, 0)" oninput="doInput('idr')">
+                <input type="number" id="idr" placeholder="0" onfocus="this.select()" oninput="calculate('idr')">
+                <div id="view-idr" class="result-view"></div>
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #3b82f6;">
             <div class="symbol-icon">$</div>
             <div class="coin-info">
                 <label>USD (Dollar)</label>
-                <input type="text" id="usd" value="0" onfocus="doFocus(this)" onblur="doBlur(this, 2)" oninput="doInput('usd')">
+                <input type="number" id="usd" placeholder="0" onfocus="this.select()" oninput="calculate('usd')">
+                <div id="view-usd" class="result-view"></div>
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--btc);">
-            <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=035" alt="btc">
-            <div class="coin-info">
-                <label>BTC (Bitcoin)</label>
-                <input type="text" id="btc" value="0" onfocus="doFocus(this)" onblur="doBlur(this, 8)" oninput="doInput('btc')">
-            </div>
-        </div>
-        <div class="coin-card" style="border-left: 5px solid var(--eth);">
-            <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png?v=035" alt="eth">
-            <div class="coin-info">
-                <label>ETH (Ethereum)</label>
-                <input type="text" id="eth" value="0" onfocus="doFocus(this)" onblur="doBlur(this, 8)" oninput="doInput('eth')">
-            </div>
-        </div>
-    </div>
-
-    <div id="watchlist"></div>
-
-    <div class="search-section">
-        <div class="search-box">
-            <input type="text" id="search-input" placeholder="Tambah koin (contoh: sol)">
-            <button class="add-btn" onclick="addCoin()">Tambah</button>
-        </div>
-        <div id="status">Memuat harga...</div>
-    </div>
-</div>
-
-<script>
-    let kursIdr = 16250; 
-    let prices = { btc: 0, eth: 0 };
-    let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
-
-    // Fungsi format angka ke tampilan (1.000.000,00)
-    function toTampilan(angka, desimal) {
-        return parseFloat(angka).toLocaleString('id-ID', {
-            minimumFractionDigits: desimal,
-            maximumFractionDigits: desimal
-        });
-    }
-
-    // Fungsi balikkan tampilan ke angka murni (1000000.00)
-    function toAngka(teks) {
-        if (!teks) return 0;
-        return parseFloat(teks.replace(/\./g, '').replace(',', '.')) || 0;
-    }
-
-    function doFocus(el) {
-        // Pas di-klik, ilangin titik biar gampang editnya
-        let val = toAngka(el.value);
-        el.value = val === 0 ? "" : val;
-        el.type = "number"; // Ubah sementara ke number biar keyboard HP enak
-    }
-
-    function doBlur(el, desimal) {
-        // Pas pindah kolom, kasih lagi titik ribuannya
-        let val = parseFloat(el.value) || 0;
-        el.type = "text";
-        el.value = toTampilan(val, desimal);
-    }
-
-    function doInput(source) {
-        calculate(source);
-    }
-
-    async function getPrice(symbol) {
-        try {
-            const res = await fetch(`https://cryptoprices.cc/${symbol.toUpperCase()}`);
-            const text = await res.text();
-            return parseFloat(text.trim()) || 0;
-        } catch (e) { return 0; }
-    }
-
-    async function fetchAllPrices() {
-        document.getElementById('status').innerText = "Sedang update...";
-        prices.btc = await getPrice('BTC');
-        prices.eth = await getPrice('ETH');
-        for (let sym of watchlist) prices[sym] = await getPrice(sym
+            <img src="
