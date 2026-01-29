@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Ultra - Logo Edition</title>
+    <title>Calc Kurs Ultra - Full Logo</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -21,14 +21,14 @@
         .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
         
         .coin-card { background: var(--card); border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; transition: 0.3s; }
-        .coin-card:hover { border-color: var(--accent); }
+        .coin-card:hover { border-color: var(--accent); transform: translateY(-2px); }
         .coin-info { flex: 1; }
         .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
         
-        /* Logo Styling */
-        .logo-wrapper { width: 40px; height: 40px; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #334155; border: 1px solid #475569; flex-shrink: 0; }
-        .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-        .logo-wrapper span { font-weight: bold; color: var(--accent); font-size: 14px; }
+        /* Logo Styling Baru - Lebih Gede & Glowing */
+        .logo-wrapper { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #1e293b; border: 2px solid #334155; flex-shrink: 0; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        .logo-wrapper img { width: 85%; height: 85%; object-fit: contain; }
+        .logo-wrapper span { font-weight: bold; color: var(--accent); font-size: 12px; }
 
         input { width: 100%; background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; outline: none; padding: 0; }
         .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; }
@@ -43,7 +43,7 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs Ultra</h2>
+        <h2>💱 Calc Kurs Fast</h2>
         <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
@@ -63,14 +63,14 @@
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--btc);">
-            <div class="logo-wrapper"><img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png" onerror="this.style.display='none'"></div>
+            <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/1/large/bitcoin.png"></div>
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
                 <input type="text" id="btc" value="0" onfocus="clearZero(this)" oninput="formatAndCalc('btc', 8)">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--eth);">
-            <div class="logo-wrapper"><img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" onerror="this.style.display='none'"></div>
+            <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png"></div>
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
                 <input type="text" id="eth" value="0" onfocus="clearZero(this)" oninput="formatAndCalc('eth', 8)">
@@ -83,7 +83,7 @@
     <div class="search-section">
         <label>TAMBAH KOIN (Simbol)</label>
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Contoh: sol, doge, xrp...">
+            <input type="text" id="search-input" placeholder="Contoh: sui, sol, doge...">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
         <div id="status" class="status-info">Ready, Bro!</div>
@@ -95,15 +95,24 @@
     let prices = { btc: 1, eth: 1 };
     let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
 
-    // Helper buat link logo
-    function getLogoUrl(sym) {
+    // Fungsi sakti buat nyari logo dari CoinGecko tanpa API Key
+    function getCoinGeckoLogo(sym) {
+        const mapping = {
+            'sui': 'https://assets.coingecko.com/coins/images/26375/large/sui_asset.png',
+            'sol': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
+            'doge': 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png',
+            'xrp': 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
+            'bnb': 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
+            'ada': 'https://assets.coingecko.com/coins/images/975/large/cardano.png',
+            'matic': 'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon_2x.png',
+            'dot': 'https://assets.coingecko.com/coins/images/12171/large/polkadot.png',
+            'trx': 'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png',
+            'avax': 'https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png'
+        };
+        
         const s = sym.toLowerCase();
-        // Beberapa koin punya mapping khusus biar pasti muncul
-        if(s === 'btc') return 'https://cryptologos.cc/logos/bitcoin-btc-logo.png';
-        if(s === 'eth') return 'https://cryptologos.cc/logos/ethereum-eth-logo.png';
-        if(s === 'sol') return 'https://cryptologos.cc/logos/solana-sol-logo.png';
-        if(s === 'usdt') return 'https://cryptologos.cc/logos/tether-usdt-logo.png';
-        // Fallback ke koin lain
+        if(mapping[s]) return mapping[s];
+        // Kalau gak ada di daftar manual, pake fallback source lain
         return `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${s}.png`;
     }
 
@@ -200,7 +209,7 @@
             div.className = "coin-card";
             div.innerHTML = `
                 <div class="logo-wrapper">
-                    <img src="${getLogoUrl(sym)}" onerror="this.parentElement.innerHTML='<span>${sym}</span>'">
+                    <img src="${getCoinGeckoLogo(sym)}" onerror="this.parentElement.innerHTML='<span>${sym}</span>'">
                 </div>
                 <div class="coin-info">
                     <label>${sym}</label>
