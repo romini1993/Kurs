@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Pro - Fixed Decimal</title>
+    <title>Calc Kurs Pro - Bug Fixed</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -101,29 +101,20 @@
         if (el.value === "0") el.value = "";
     }
 
-    // Fungsi parse angka yang pinter (ngerti titik ribuan dan koma/titik desimal)
-    function parseNumber(s) {
+    // Fungsi konversi angka murni ke format tampilan Indonesia
+    function toIDFormat(val, dec) {
+        return new Intl.NumberFormat('id-ID', {
+            minimumFractionDigits: dec,
+            maximumFractionDigits: dec
+        }).format(val);
+    }
+
+    // Ambil angka murni dari string yang ada titik/komanya
+    function toPureNumber(s) {
         if (!s) return 0;
-        let str = s.toString();
-        // Kalau isinya cuma angka dan satu pemisah desimal (titik/koma)
-        // Kita ilangin titik ribuan dulu (titik yang diikutin 3 angka)
-        let clean = str.replace(/\.(?=\d{3}(\.|$|\,))/g, ""); 
-        // Ganti koma jadi titik buat standar itungan
-        clean = clean.replace(",", ".");
-        return parseFloat(clean) || 0;
-    }
-
-    // Format ribuan buat IDR
-    function formatRibuan(n) {
-        let val = Math.round(n).toString();
-        return val.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    }
-
-    // Format desimal buat USD
-    function formatDecimal(n) {
-        let parts = n.toFixed(2).split(".");
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        return parts.join(",");
+        // Ganti koma jadi titik, hapus titik ribuan
+        let res = s.toString().replace(/\./g, '').replace(',', '.');
+        return parseFloat(res) || 0;
     }
 
     async function getPrice(symbol) {
@@ -144,30 +135,36 @@
     }
 
     function handleInput(source) {
-        // Pas lagi ngetik di kolom aktif, jangan diformat dulu biar titik desimal gak ilang
-        calculate(source);
+        let el = document.getElementById(source);
+        // Kita biarin user ngetik apa adanya di kolom ini (pake titik atau koma desimal)
+        let raw = el.value.replace(',', '.'); 
+        let val = parseFloat(raw) || 0;
+
+        // Kalau user ngetik di kolom selain USD/IDR (Crypto), ambil angka murni
+        if (source !== 'idr' && source !== 'usd') {
+            val = parseFloat(el.value) || 0;
+        }
+
+        calculate(source, val);
     }
 
-    function calculate(source) {
-        const el = document.getElementById(source);
-        const val = parseNumber(el.value);
+    function calculate(source, val) {
         let baseUsd = 0;
 
+        // 1. Cari nilai dasar USD
         if (source === 'idr') baseUsd = val / usdToIdr;
         else if (source === 'usd') baseUsd = val;
         else baseUsd = val * (prices[source] || 0);
 
-        // Update IDR
+        // 2. Update kolom LAIN (yang bukan lagi diketik)
         if (source !== 'idr') {
-            document.getElementById('idr').value = formatRibuan(baseUsd * usdToIdr);
+            document.getElementById('idr').value = toIDFormat(baseUsd * usdToIdr, 0);
         }
-
-        // Update USD
         if (source !== 'usd') {
-            document.getElementById('usd').value = formatDecimal(baseUsd);
+            document.getElementById('usd').value = toIDFormat(baseUsd, 2);
         }
 
-        // Update Crypto
+        // Update Crypto (8 desimal)
         const updateCrypto = (id, p) => {
             if(id !== source) {
                 const target = document.getElementById(id);
