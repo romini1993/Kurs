@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>Calc Kurs Pro Fast</title>
+    <title>Calc Kurs Pro Fix</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -61,28 +61,28 @@
             <div class="logo-wrapper"><img src="https://api.iconify.design/emojione:flag-for-indonesia.svg"></div>
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
-                <input type="text" id="idr" inputmode="decimal" value="0" onfocus="if(this.value=='0')this.value=''" oninput="calculate('idr')">
+                <input type="text" id="idr" inputmode="decimal" placeholder="0" oninput="calculate('idr')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #3b82f6;">
             <div class="logo-wrapper"><img src="https://api.iconify.design/emojione:flag-for-united-states.svg"></div>
             <div class="coin-info">
                 <label>USD (Dollar)</label>
-                <input type="text" id="usd" inputmode="decimal" value="0" onfocus="if(this.value=='0')this.value=''" oninput="calculate('usd')">
+                <input type="text" id="usd" inputmode="decimal" placeholder="0" oninput="calculate('usd')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #f7931a;">
             <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/1/large/bitcoin.png"></div>
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
-                <input type="text" id="btc" inputmode="decimal" value="0" onfocus="if(this.value=='0')this.value=''" oninput="calculate('btc')">
+                <input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="calculate('btc')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #627eea;">
             <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png"></div>
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
-                <input type="text" id="eth" inputmode="decimal" value="0" onfocus="if(this.value=='0')this.value=''" oninput="calculate('eth')">
+                <input type="text" id="eth" inputmode="decimal" placeholder="0" oninput="calculate('eth')">
             </div>
         </div>
     </div>
@@ -101,12 +101,13 @@
 <script>
     let usdToIdr = 16250; 
     let prices = { btc: 0, eth: 0 };
-    let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v2')) || [];
+    let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
 
+    // FIX LOGO SUI & DEEP
     function getLogo(sym) {
         const s = sym.toLowerCase();
         const map = {
-            'sui': 'https://assets.coingecko.com/coins/images/26375/large/sui_asset.png',
+            'sui': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/sui/info/logo.png', // Logo SUI Droplet asli
             'deep': 'https://assets.coingecko.com/coins/images/40049/large/deep.png',
             'sol': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
             'usdt': 'https://assets.coingecko.com/coins/images/325/large/tether.png'
@@ -132,22 +133,29 @@
     }
 
     function formatNum(num, dec) {
+        if (num === 0) return ""; // Jangan kasih nol kalau nilainya nol
         return num.toLocaleString('en-US', { maximumFractionDigits: dec });
     }
 
     function calculate(source) {
         let el = document.getElementById(source);
         let raw = el.value.replace(/,/g, '');
-        let val = parseFloat(raw) || 0;
-
-        // Jangan format pas lagi ngetik titik biar ga mental kursornya
-        if (!el.value.endsWith('.')) {
-            let d = (source === 'idr') ? 0 : (source === 'usd' ? 2 : 8);
-            el.value = formatNum(val, d);
+        
+        // LOGIKA FIX DELETE: Kalau kosong, kosongin semua, jangan muncul nol
+        if (raw === "" || raw === ".") {
+            const allInputs = document.querySelectorAll('input[inputmode="decimal"]');
+            allInputs.forEach(input => { if(input.id !== source) input.value = ""; });
+            return;
         }
 
+        let val = parseFloat(raw) || 0;
+
+        // Balikin kursor ke posisi bener pas diformat
+        let cursorContent = el.value.substring(0, el.selectionStart).replace(/,/g, '');
+        
         let baseUsd = (source === 'idr') ? val / usdToIdr : (source === 'usd' ? val : val * (prices[source] || 0));
 
+        // Update input lain
         if (source !== 'idr') document.getElementById('idr').value = formatNum(baseUsd * usdToIdr, 0);
         if (source !== 'usd') document.getElementById('usd').value = formatNum(baseUsd, 2);
         if (source !== 'btc') document.getElementById('btc').value = formatNum(baseUsd / (prices.btc || 1), 8);
@@ -159,6 +167,12 @@
                 if (target) target.value = formatNum(baseUsd / (prices[s] || 1), 5);
             }
         });
+        
+        // Format input sendiri setelah semua kelar, biar gak mental
+        if (!el.value.endsWith('.')) {
+            let d = (source === 'idr') ? 0 : (source === 'usd' ? 2 : 8);
+            el.value = formatNum(val, d);
+        }
     }
 
     async function addCoin() {
@@ -168,7 +182,7 @@
         if (p > 0) {
             watchlist.push(s);
             prices[s] = p;
-            localStorage.setItem('kurs_fast_v2', JSON.stringify(watchlist));
+            localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
             renderWatchlist();
             document.getElementById('search-input').value = "";
         } else { alert("Simbol " + s + " gak ketemu!"); }
@@ -176,7 +190,7 @@
 
     function removeCoin(s) {
         watchlist = watchlist.filter(i => i !== s);
-        localStorage.setItem('kurs_fast_v2', JSON.stringify(watchlist));
+        localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
         renderWatchlist();
     }
 
@@ -191,7 +205,7 @@
                     </div>
                     <div class="coin-info">
                         <label>${s}</label>
-                        <input type="text" id="${s}" inputmode="decimal" value="0" onfocus="if(this.value=='0')this.value=''" oninput="calculate('${s}')">
+                        <input type="text" id="${s}" inputmode="decimal" placeholder="0" oninput="calculate('${s}')">
                     </div>
                     <div class="delete-btn" onclick="removeCoin('${s}')">×</div>
                 </div>`;
