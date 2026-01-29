@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Pro - Decimal</title>
+    <title>Calc Kurs Pro - Fixed Decimal</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -101,24 +101,29 @@
         if (el.value === "0") el.value = "";
     }
 
-    // Format buat angka bulet (IDR)
-    function formatNumber(n) {
-        return n.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    }
-
-    // Format buat desimal 2 angka (USD)
-    function formatDecimal(n) {
-        let val = parseFloat(n).toFixed(2);
-        let parts = val.split(".");
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        return parts.join(",");
-    }
-
+    // Fungsi parse angka yang pinter (ngerti titik ribuan dan koma/titik desimal)
     function parseNumber(s) {
         if (!s) return 0;
-        // Hapus titik, ganti koma jadi titik biar bisa dihitung
-        let clean = s.toString().replace(/\./g, "").replace(",", ".");
+        let str = s.toString();
+        // Kalau isinya cuma angka dan satu pemisah desimal (titik/koma)
+        // Kita ilangin titik ribuan dulu (titik yang diikutin 3 angka)
+        let clean = str.replace(/\.(?=\d{3}(\.|$|\,))/g, ""); 
+        // Ganti koma jadi titik buat standar itungan
+        clean = clean.replace(",", ".");
         return parseFloat(clean) || 0;
+    }
+
+    // Format ribuan buat IDR
+    function formatRibuan(n) {
+        let val = Math.round(n).toString();
+        return val.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    // Format desimal buat USD
+    function formatDecimal(n) {
+        let parts = n.toFixed(2).split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return parts.join(",");
     }
 
     async function getPrice(symbol) {
@@ -139,6 +144,7 @@
     }
 
     function handleInput(source) {
+        // Pas lagi ngetik di kolom aktif, jangan diformat dulu biar titik desimal gak ilang
         calculate(source);
     }
 
@@ -151,13 +157,12 @@
         else if (source === 'usd') baseUsd = val;
         else baseUsd = val * (prices[source] || 0);
 
-        // Update IDR (Bulet)
+        // Update IDR
         if (source !== 'idr') {
-            let idrFinal = Math.round(baseUsd * usdToIdr).toString();
-            document.getElementById('idr').value = idrFinal.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            document.getElementById('idr').value = formatRibuan(baseUsd * usdToIdr);
         }
 
-        // Update USD (Desimal 2 angka)
+        // Update USD
         if (source !== 'usd') {
             document.getElementById('usd').value = formatDecimal(baseUsd);
         }
