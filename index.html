@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Pro - Fast</title>
+    <title>Calc Kurs Pro</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -24,7 +24,13 @@
         .coin-info { flex: 1; }
         .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
         
-        .flag-icon { width: 32px; height: 32px; border-radius: 50%; background: white; object-fit: cover; border: 2px solid #334155; }
+        /* Ikon Baru: Pake Logo Simbol */
+        .symbol-icon { 
+            width: 32px; height: 32px; border-radius: 50%; 
+            background: #334155; color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 14px; border: 1px solid var(--accent);
+        }
         .coin-card img { width: 32px; height: 32px; border-radius: 50%; }
         
         input { width: 100%; background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; outline: none; padding: 0; }
@@ -45,32 +51,32 @@
     </div>
 
     <div id="fixed-list">
-        <div class="coin-card" style="border-left: 5px solid #ef4444;">
-            <img class="flag-icon" src="https://flagcdn.com/w80/id.png" alt="idr">
+        <div class="coin-card" style="border-left: 5px solid #22c55e;">
+            <div class="symbol-icon">Rp</div>
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
-                <input type="number" id="idr" placeholder="Input IDR..." oninput="calculate('idr')">
+                <input type="number" id="idr" value="0" onfocus="clearZero(this)" oninput="calculate('idr')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #3b82f6;">
-            <img class="flag-icon" src="https://flagcdn.com/w80/us.png" alt="usd">
+            <div class="symbol-icon">$</div>
             <div class="coin-info">
                 <label>USD (Dollar)</label>
-                <input type="number" id="usd" placeholder="0" oninput="calculate('usd')">
+                <input type="number" id="usd" value="0" onfocus="clearZero(this)" oninput="calculate('usd')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--btc);">
             <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=035" alt="btc">
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
-                <input type="number" id="btc" placeholder="0" oninput="calculate('btc')">
+                <input type="number" id="btc" value="0" onfocus="clearZero(this)" oninput="calculate('btc')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--eth);">
             <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png?v=035" alt="eth">
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
-                <input type="number" id="eth" placeholder="0" oninput="calculate('eth')">
+                <input type="number" id="eth" value="0" onfocus="clearZero(this)" oninput="calculate('eth')">
             </div>
         </div>
     </div>
@@ -88,42 +94,44 @@
 </div>
 
 <script>
-    // Patokan kurs USD ke IDR (bisa berubah sewaktu-waktu)
     let usdToIdr = 16200; 
-    let prices = { btc: 0, eth: 0 };
+    let prices = { btc: 1, eth: 1 };
     let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
+
+    // Fungsi buat ngilangin angka 0 pas di-klik
+    function clearZero(el) {
+        if (el.value == "0") {
+            el.value = "";
+        }
+    }
 
     async function getPrice(symbol) {
         try {
             const res = await fetch(`https://cryptoprices.cc/${symbol.toUpperCase()}`);
-            const text = await res.json(); // API ini balikin angka langsung
-            return parseFloat(text);
+            const text = await res.text();
+            return parseFloat(text) || 0;
         } catch (e) { return 0; }
     }
 
     async function fetchAllPrices() {
-        document.getElementById('status').innerText = "Narik data cepet...";
-        
-        // Ambil harga utama
+        document.getElementById('status').innerText = "Updating data...";
         prices.btc = await getPrice('BTC');
         prices.eth = await getPrice('ETH');
-        
-        // Ambil harga watchlist
         for (let sym of watchlist) {
             prices[sym] = await getPrice(sym);
         }
-
         renderWatchlist();
-        document.getElementById('status').innerText = "Update Beres: " + new Date().toLocaleTimeString();
+        document.getElementById('status').innerText = "Beres! Jam: " + new Date().toLocaleTimeString();
     }
 
     function calculate(source) {
-        const val = parseFloat(document.getElementById(source).value) || 0;
+        const inputEl = document.getElementById(source);
+        const val = parseFloat(inputEl.value) || 0;
         let baseUsd = 0;
 
         if (source === 'idr') baseUsd = val / usdToIdr;
         else if (source === 'usd') baseUsd = val;
-        else baseUsd = val * prices[source];
+        else baseUsd = val * (prices[source] || 0);
 
         const update = (id, v, dec) => {
             if(id !== source) {
@@ -134,11 +142,11 @@
 
         update('idr', baseUsd * usdToIdr, 0);
         update('usd', baseUsd, 2);
-        update('btc', baseUsd / prices.btc, 8);
-        update('eth', baseUsd / prices.eth, 8);
+        update('btc', baseUsd / (prices.btc || 1), 8);
+        update('eth', baseUsd / (prices.eth || 1), 8);
 
         watchlist.forEach(sym => {
-            update(sym, baseUsd / prices[sym], 8);
+            update(sym, baseUsd / (prices[sym] || 1), 8);
         });
     }
 
@@ -155,7 +163,7 @@
             input.value = "";
             renderWatchlist();
         } else {
-            alert("Koin " + sym + " gak ketemu di cryptoprices.cc");
+            alert("Simbol " + sym + " gak ketemu.");
         }
     }
 
@@ -172,10 +180,10 @@
             const div = document.createElement('div');
             div.className = "coin-card";
             div.innerHTML = `
-                <img src="https://cryptologos.cc/logos/${sym.toLowerCase()}-${sym.toLowerCase()}-logo.png" onerror="this.src='https://assets.coingecko.com/coins/images/placeholder.png'">
+                <div class="symbol-icon" style="font-size:10px">${sym}</div>
                 <div class="coin-info">
                     <label>${sym}</label>
-                    <input type="number" id="${sym}" placeholder="0" oninput="calculate('${sym}')">
+                    <input type="number" id="${sym}" value="0" onfocus="clearZero(this)" oninput="calculate('${sym}')">
                 </div>
                 <div class="delete-btn" onclick="removeCoin('${sym}')">×</div>
             `;
