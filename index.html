@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>Calc Kurs Pro Fix</title>
+    <title>Calc Kurs Pro Fix Desimal</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -103,11 +103,10 @@
     let prices = { btc: 0, eth: 0 };
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
 
-    // FIX LOGO SUI & DEEP
     function getLogo(sym) {
         const s = sym.toLowerCase();
         const map = {
-            'sui': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/sui/info/logo.png', // Logo SUI Droplet asli
+            'sui': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/sui/info/logo.png',
             'deep': 'https://assets.coingecko.com/coins/images/40049/large/deep.png',
             'sol': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
             'usdt': 'https://assets.coingecko.com/coins/images/325/large/tether.png'
@@ -132,46 +131,46 @@
         document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
 
-    function formatNum(num, dec) {
-        if (num === 0) return ""; // Jangan kasih nol kalau nilainya nol
-        return num.toLocaleString('en-US', { maximumFractionDigits: dec });
+    // Fungsi format yang lebih pinter buat desimal
+    function formatOutput(num, dec) {
+        if (num === 0) return "";
+        return new Intl.NumberFormat('en-US', { 
+            maximumFractionDigits: dec,
+            minimumFractionDigits: 0 
+        }).format(num);
     }
 
     function calculate(source) {
         let el = document.getElementById(source);
-        let raw = el.value.replace(/,/g, '');
+        let rawValue = el.value.replace(/,/g, '');
         
-        // LOGIKA FIX DELETE: Kalau kosong, kosongin semua, jangan muncul nol
-        if (raw === "" || raw === ".") {
+        if (rawValue === "" || rawValue === ".") {
             const allInputs = document.querySelectorAll('input[inputmode="decimal"]');
             allInputs.forEach(input => { if(input.id !== source) input.value = ""; });
             return;
         }
 
-        let val = parseFloat(raw) || 0;
-
-        // Balikin kursor ke posisi bener pas diformat
-        let cursorContent = el.value.substring(0, el.selectionStart).replace(/,/g, '');
-        
+        let val = parseFloat(rawValue) || 0;
         let baseUsd = (source === 'idr') ? val / usdToIdr : (source === 'usd' ? val : val * (prices[source] || 0));
 
-        // Update input lain
-        if (source !== 'idr') document.getElementById('idr').value = formatNum(baseUsd * usdToIdr, 0);
-        if (source !== 'usd') document.getElementById('usd').value = formatNum(baseUsd, 2);
-        if (source !== 'btc') document.getElementById('btc').value = formatNum(baseUsd / (prices.btc || 1), 8);
-        if (source !== 'eth') document.getElementById('eth').value = formatNum(baseUsd / (prices.eth || 1), 8);
+        // Update SEMUA input lain kecuali yang lagi diisi
+        if (source !== 'idr') document.getElementById('idr').value = formatOutput(baseUsd * usdToIdr, 0);
+        if (source !== 'usd') document.getElementById('usd').value = formatOutput(baseUsd, 4); // USD kasih 4 desimal biar keliatan pergerakan receh
+        if (source !== 'btc') document.getElementById('btc').value = formatOutput(baseUsd / (prices.btc || 1), 8);
+        if (source !== 'eth') document.getElementById('eth').value = formatOutput(baseUsd / (prices.eth || 1), 8);
 
         watchlist.forEach(s => {
             if (s !== source) {
                 let target = document.getElementById(s);
-                if (target) target.value = formatNum(baseUsd / (prices[s] || 1), 5);
+                if (target) target.value = formatOutput(baseUsd / (prices[s] || 1), 6);
             }
         });
-        
-        // Format input sendiri setelah semua kelar, biar gak mental
-        if (!el.value.endsWith('.')) {
-            let d = (source === 'idr') ? 0 : (source === 'usd' ? 2 : 8);
-            el.value = formatNum(val, d);
+
+        // Bagian penting: Jangan format input yang lagi diketik kalau ada titiknya
+        // Supaya user bisa ngetik 0.001 tanpa kepotong
+        if (!el.value.includes('.')) {
+            let d = (source === 'idr') ? 0 : (source === 'usd' ? 4 : 8);
+            el.value = formatOutput(val, d);
         }
     }
 
