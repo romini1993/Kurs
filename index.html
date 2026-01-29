@@ -24,7 +24,6 @@
         .coin-info { flex: 1; }
         .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
         
-        /* Simbol IDR & USD */
         .symbol-icon { width: 35px; height: 35px; border-radius: 10px; background: #334155; color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid #475569; }
         .coin-card img { width: 35px; height: 35px; border-radius: 50%; }
         
@@ -50,28 +49,28 @@
             <div class="symbol-icon">Rp</div>
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
-                <input type="number" id="idr" value="0" onfocus="this.select()" oninput="calculate('idr')">
+                <input type="text" id="idr" value="0" onfocus="doFocus(this)" onblur="doBlur(this, 0)" oninput="doInput('idr')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #3b82f6;">
             <div class="symbol-icon">$</div>
             <div class="coin-info">
                 <label>USD (Dollar)</label>
-                <input type="number" id="usd" value="0" onfocus="this.select()" oninput="calculate('usd')">
+                <input type="text" id="usd" value="0" onfocus="doFocus(this)" onblur="doBlur(this, 2)" oninput="doInput('usd')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--btc);">
             <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=035" alt="btc">
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
-                <input type="number" id="btc" value="0" onfocus="this.select()" oninput="calculate('btc')">
+                <input type="text" id="btc" value="0" onfocus="doFocus(this)" onblur="doBlur(this, 8)" oninput="doInput('btc')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--eth);">
             <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png?v=035" alt="eth">
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
-                <input type="number" id="eth" value="0" onfocus="this.select()" oninput="calculate('eth')">
+                <input type="text" id="eth" value="0" onfocus="doFocus(this)" onblur="doBlur(this, 8)" oninput="doInput('eth')">
             </div>
         </div>
     </div>
@@ -92,6 +91,38 @@
     let prices = { btc: 0, eth: 0 };
     let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
 
+    // Fungsi format angka ke tampilan (1.000.000,00)
+    function toTampilan(angka, desimal) {
+        return parseFloat(angka).toLocaleString('id-ID', {
+            minimumFractionDigits: desimal,
+            maximumFractionDigits: desimal
+        });
+    }
+
+    // Fungsi balikkan tampilan ke angka murni (1000000.00)
+    function toAngka(teks) {
+        if (!teks) return 0;
+        return parseFloat(teks.replace(/\./g, '').replace(',', '.')) || 0;
+    }
+
+    function doFocus(el) {
+        // Pas di-klik, ilangin titik biar gampang editnya
+        let val = toAngka(el.value);
+        el.value = val === 0 ? "" : val;
+        el.type = "number"; // Ubah sementara ke number biar keyboard HP enak
+    }
+
+    function doBlur(el, desimal) {
+        // Pas pindah kolom, kasih lagi titik ribuannya
+        let val = parseFloat(el.value) || 0;
+        el.type = "text";
+        el.value = toTampilan(val, desimal);
+    }
+
+    function doInput(source) {
+        calculate(source);
+    }
+
     async function getPrice(symbol) {
         try {
             const res = await fetch(`https://cryptoprices.cc/${symbol.toUpperCase()}`);
@@ -104,65 +135,4 @@
         document.getElementById('status').innerText = "Sedang update...";
         prices.btc = await getPrice('BTC');
         prices.eth = await getPrice('ETH');
-        for (let sym of watchlist) prices[sym] = await getPrice(sym);
-        renderWatchlist();
-        document.getElementById('status').innerText = "Update Beres: " + new Date().toLocaleTimeString();
-    }
-
-    function calculate(source) {
-        const val = parseFloat(document.getElementById(source).value) || 0;
-        let baseUsd = 0;
-
-        if (source === 'idr') baseUsd = val / kursIdr;
-        else if (source === 'usd') baseUsd = val;
-        else baseUsd = val * (prices[source] || 0);
-
-        const update = (id, v, dec) => {
-            if(id !== source) {
-                const el = document.getElementById(id);
-                if(el) el.value = v.toFixed(dec).replace(/\.?0+$/, "");
-            }
-        };
-
-        update('idr', baseUsd * kursIdr, 0);
-        update('usd', baseUsd, 2);
-        update('btc', baseUsd / (prices.btc || 1), 8);
-        update('eth', baseUsd / (prices.eth || 1), 8);
-        watchlist.forEach(sym => update(sym, baseUsd / (prices[sym] || 1), 8));
-    }
-
-    async function addCoin() {
-        const input = document.getElementById('search-input');
-        const sym = input.value.toUpperCase().trim();
-        if (!sym || watchlist.includes(sym)) return;
-        const p = await getPrice(sym);
-        if (p > 0) {
-            watchlist.push(sym);
-            prices[sym] = p;
-            localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
-            input.value = "";
-            renderWatchlist();
-        } else { alert("Simbol " + sym + " gak ketemu."); }
-    }
-
-    function removeCoin(sym) {
-        watchlist = watchlist.filter(s => s !== sym);
-        localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
-        renderWatchlist();
-    }
-
-    function renderWatchlist() {
-        const container = document.getElementById('watchlist');
-        container.innerHTML = "";
-        watchlist.forEach(sym => {
-            const div = document.createElement('div');
-            div.className = "coin-card";
-            div.innerHTML = `<div class="symbol-icon" style="font-size:10px">${sym}</div><div class="coin-info"><label>${sym}</label><input type="number" id="${sym}" value="0" onfocus="this.select()" oninput="calculate('${sym}')"></div><div class="delete-btn" onclick="removeCoin('${sym}')">×</div>`;
-            container.appendChild(div);
-        });
-    }
-
-    window.onload = fetchAllPrices;
-</script>
-</body>
-</html>
+        for (let sym of watchlist) prices[sym] = await getPrice(sym
