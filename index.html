@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-title" content="CalcKurs">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
     <meta name="theme-color" content="#0f172a">
-    <title>Calc Kurs Pro Fix Desimal</title>
+    <title>Calc Kurs Pro Fix Total</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -131,12 +131,12 @@
         document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
 
-    // Fungsi format yang lebih pinter buat desimal
+    // Fungsi format output yang tetep nahan nol di depan
     function formatOutput(num, dec) {
         if (num === 0) return "";
         return new Intl.NumberFormat('en-US', { 
             maximumFractionDigits: dec,
-            minimumFractionDigits: 0 
+            minimumIntegerDigits: 1 // Ini pokonya yang bikin angka 0 tetep ada!
         }).format(num);
     }
 
@@ -144,7 +144,8 @@
         let el = document.getElementById(source);
         let rawValue = el.value.replace(/,/g, '');
         
-        if (rawValue === "" || rawValue === ".") {
+        // Cek kalau input cuma nol atau titik doang pas ngetik
+        if (rawValue === "" || rawValue === "." || rawValue === "0" || rawValue === "0.") {
             const allInputs = document.querySelectorAll('input[inputmode="decimal"]');
             allInputs.forEach(input => { if(input.id !== source) input.value = ""; });
             return;
@@ -153,9 +154,9 @@
         let val = parseFloat(rawValue) || 0;
         let baseUsd = (source === 'idr') ? val / usdToIdr : (source === 'usd' ? val : val * (prices[source] || 0));
 
-        // Update SEMUA input lain kecuali yang lagi diisi
+        // Update SEMUA koin lain
         if (source !== 'idr') document.getElementById('idr').value = formatOutput(baseUsd * usdToIdr, 0);
-        if (source !== 'usd') document.getElementById('usd').value = formatOutput(baseUsd, 4); // USD kasih 4 desimal biar keliatan pergerakan receh
+        if (source !== 'usd') document.getElementById('usd').value = formatOutput(baseUsd, 4);
         if (source !== 'btc') document.getElementById('btc').value = formatOutput(baseUsd / (prices.btc || 1), 8);
         if (source !== 'eth') document.getElementById('eth').value = formatOutput(baseUsd / (prices.eth || 1), 8);
 
@@ -166,8 +167,7 @@
             }
         });
 
-        // Bagian penting: Jangan format input yang lagi diketik kalau ada titiknya
-        // Supaya user bisa ngetik 0.001 tanpa kepotong
+        // Format input sendiri HANYA jika bukan sedang ngetik desimal
         if (!el.value.includes('.')) {
             let d = (source === 'idr') ? 0 : (source === 'usd' ? 4 : 8);
             el.value = formatOutput(val, d);
