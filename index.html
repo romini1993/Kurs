@@ -3,17 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <link rel="manifest" href="manifest-kurs.json">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CalcKurs">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2454/2454269.png">
-    
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f172a">
-    <title>Calc Kurs Ultra</title>
-
+    <title>Calc Kurs Fast</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -22,28 +15,26 @@
             --text: #f8fafc;
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); margin: 0; padding: env(safe-area-inset-top) 20px 20px 20px; display: flex; justify-content: center; overflow-x: hidden; }
-        .container { width: 100%; max-width: 400px; padding-bottom: 40px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 20; }
-        h2 { margin: 0; font-size: 20px; color: var(--accent); }
-        .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        body { background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 400px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h2 { margin: 0; font-size: 22px; color: var(--accent); }
+        .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
         
-        .coin-card { background: var(--card); border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .coin-card { background: var(--card); border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; border: 1px solid #334155; }
         .coin-info { flex: 1; }
-        .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 2px; }
+        .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
         
-        .logo-wrapper { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #1e293b; border: 1px solid #475569; flex-shrink: 0; }
-        .logo-wrapper img { width: 80%; height: 80%; object-fit: contain; }
-        .logo-wrapper span { font-weight: bold; color: var(--accent); font-size: 11px; }
+        .logo-wrapper { width: 42px; height: 42px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #1e293b; border: 2px solid #334155; flex-shrink: 0; }
+        .logo-wrapper img { width: 85%; height: 85%; object-fit: contain; }
+        .logo-wrapper span { font-weight: bold; color: var(--accent); font-size: 12px; }
 
         input { width: 100%; background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; outline: none; padding: 0; }
-        input::placeholder { color: #475569; }
-
-        .search-section { margin-top: 25px; border-top: 1px dashed #334155; padding-top: 20px; }
+        .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; }
         .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
-        .search-box input { background: var(--card); border: 1px solid #334155 !important; border-radius: 10px; padding: 12px; font-size: 14px; color: white; }
+        .search-box input { background: var(--card); border: 1px solid #334155 !important; border-radius: 10px; padding: 12px; font-size: 14px; color: white; width: 100%; }
         .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
-        .delete-btn { color: #ef4444; font-size: 24px; cursor: pointer; padding: 0 5px; }
+        .delete-btn { color: #ef4444; font-size: 24px; cursor: pointer; padding-left: 10px; }
         .status-info { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 10px; }
     </style>
 </head>
@@ -51,33 +42,33 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs Ultra</h2>
+        <h2>💱 Calc Kurs Fast</h2>
         <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
     <div id="fixed-list">
-        <div class="coin-card" style="border-left: 4px solid #ef4444;">
+        <div class="coin-card" style="border-left: 5px solid #ef4444;">
             <div class="logo-wrapper"><span>IDR</span></div>
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
                 <input type="text" id="idr" inputmode="decimal" placeholder="0" oninput="handleInput('idr')">
             </div>
         </div>
-        <div class="coin-card" style="border-left: 4px solid #3b82f6;">
+        <div class="coin-card" style="border-left: 5px solid #3b82f6;">
             <div class="logo-wrapper"><span>USD</span></div>
             <div class="coin-info">
                 <label>USD (Dollar)</label>
                 <input type="text" id="usd" inputmode="decimal" placeholder="0" oninput="handleInput('usd')">
             </div>
         </div>
-        <div class="coin-card" style="border-left: 4px solid #f7931a;">
+        <div class="coin-card" style="border-left: 5px solid #f7931a;">
             <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/1/large/bitcoin.png"></div>
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
                 <input type="text" id="btc" inputmode="decimal" placeholder="0" oninput="handleInput('btc')">
             </div>
         </div>
-        <div class="coin-card" style="border-left: 4px solid #627eea;">
+        <div class="coin-card" style="border-left: 5px solid #627eea;">
             <div class="logo-wrapper"><img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png"></div>
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
@@ -89,9 +80,9 @@
     <div id="watchlist"></div>
 
     <div class="search-section">
-        <label style="font-size: 11px; font-weight: bold; color: #94a3b8;">TAMBAH KOIN</label>
+        <label>TAMBAH KOIN (Simbol)</label>
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Simbol (sui, sol, doge...)">
+            <input type="text" id="search-input" placeholder="Contoh: sui, sol, doge...">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
         <div id="status" class="status-info">Ready, Bro!</div>
@@ -99,16 +90,129 @@
 </div>
 
 <script>
-    // --- 1. REGISTRASI SERVICE WORKER (Biar Bisa Install) ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            const blob = new Blob([
-                "self.addEventListener('install', e => self.skipWaiting());" +
-                "self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));"
-            ], { type: 'application/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(blob));
+    let usdToIdr = 16250; 
+    let prices = { btc: 1, eth: 1 };
+    let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
+
+    // Fungsi format US (1,000.00)
+    function formatUS(val, dec) {
+        if (val === 0) return "";
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: dec
+        }).format(val);
+    }
+
+    // Ambil angka murni
+    function parsePure(str) {
+        return parseFloat(str.replace(/,/g, '')) || 0;
+    }
+
+    async function getPrice(symbol) {
+        try {
+            const res = await fetch(`https://cryptoprices.cc/${symbol.toUpperCase()}`);
+            const text = await res.text();
+            return parseFloat(text.trim()) || 0;
+        } catch (e) { return 0; }
+    }
+
+    async function fetchAllPrices() {
+        document.getElementById('status').innerText = "Updating...";
+        prices.btc = await getPrice('BTC');
+        prices.eth = await getPrice('ETH');
+        for (let sym of watchlist) prices[sym] = await getPrice(sym);
+        renderWatchlist();
+        document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
+    }
+
+    function handleInput(source) {
+        const el = document.getElementById(source);
+        let rawValue = el.value.replace(/[^0-9.]/g, '');
+        
+        // Update tampilan input sendiri (biar koma muncul pas ngetik ribuan)
+        if (!rawValue.endsWith('.')) {
+            const pure = parseFloat(rawValue) || 0;
+            const decLimit = (source === 'btc' || source === 'eth') ? 8 : (source === 'idr' ? 0 : 5);
+            el.value = formatUS(pure, decLimit);
+        }
+
+        const val = parseFloat(rawValue) || 0;
+        calculate(source, val);
+    }
+
+    function calculate(source, val) {
+        let baseUsd = 0;
+        if (source === 'idr') baseUsd = val / usdToIdr;
+        else if (source === 'usd') baseUsd = val;
+        else baseUsd = val * (prices[source] || 0);
+
+        // Update IDR
+        if (source !== 'idr') document.getElementById('idr').value = formatUS(baseUsd * usdToIdr, 0);
+        // Update USD
+        if (source !== 'usd') document.getElementById('usd').value = formatUS(baseUsd, 2);
+        // Update BTC & ETH
+        if (source !== 'btc') document.getElementById('btc').value = formatUS(baseUsd / (prices.btc || 1), 8);
+        if (source !== 'eth') document.getElementById('eth').value = formatUS(baseUsd / (prices.eth || 1), 8);
+
+        // Update Watchlist
+        watchlist.forEach(sym => {
+            if (sym !== source) {
+                const target = document.getElementById(sym);
+                if (target) target.value = formatUS(baseUsd / (prices[sym] || 1), 5);
+            }
         });
     }
 
-    // --- 2. LOGIKA UTAMA ---
-    let usdToIdr = 16250;
+    async function addCoin() {
+        const input = document.getElementById('search-input');
+        const sym = input.value.toLowerCase().trim();
+        if (!sym || watchlist.includes(sym)) return;
+        const p = await getPrice(sym);
+        if (p > 0) {
+            watchlist.push(sym);
+            prices[sym] = p;
+            localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
+            input.value = "";
+            renderWatchlist();
+        } else { alert("Simbol gak ketemu."); }
+    }
+
+    function removeCoin(sym) {
+        watchlist = watchlist.filter(s => s !== sym);
+        localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
+        renderWatchlist();
+    }
+
+    function renderWatchlist() {
+        const container = document.getElementById('watchlist');
+        container.innerHTML = "";
+        watchlist.forEach(sym => {
+            const div = document.createElement('div');
+            div.className = "coin-card";
+            const logoUrl = `https://assets.coingecko.com/coins/images/` + getSuiLogo(sym);
+            div.innerHTML = `
+                <div class="logo-wrapper">
+                    <img src="${logoUrl}" onerror="this.parentElement.innerHTML='<span>${sym.toUpperCase()}</span>'">
+                </div>
+                <div class="coin-info">
+                    <label>${sym.toUpperCase()}</label>
+                    <input type="text" id="${sym}" inputmode="decimal" placeholder="0" oninput="handleInput('${sym}')">
+                </div>
+                <div class="delete-btn" onclick="removeCoin('${sym}')">×</div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // Helper logo khusus koin populer biar pasti muncul
+    function getSuiLogo(s) {
+        if(s === 'sui') return '26375/large/sui_asset.png';
+        if(s === 'sol') return '4128/large/solana.png';
+        if(s === 'doge') return '5/large/dogecoin.png';
+        return ''; // Biar fallback ke span
+    }
+
+    window.onload = fetchAllPrices;
+</script>
+</body>
+</html>
