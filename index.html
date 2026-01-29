@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Pro - Bug Fixed</title>
+    <title>Calc Kurs Pro - International Standard</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -45,7 +45,7 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs Pro</h2>
+        <h2>💱 Calc Kurs Fast</h2>
         <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
@@ -101,20 +101,18 @@
         if (el.value === "0") el.value = "";
     }
 
-    // Fungsi konversi angka murni ke format tampilan Indonesia
-    function toIDFormat(val, dec) {
-        return new Intl.NumberFormat('id-ID', {
+    // Fungsi format US (Ribuan koma, desimal titik)
+    function toUSFormat(val, dec) {
+        return new Intl.NumberFormat('en-US', {
             minimumFractionDigits: dec,
             maximumFractionDigits: dec
         }).format(val);
     }
 
-    // Ambil angka murni dari string yang ada titik/komanya
+    // Ambil angka murni dari format US (Hapus koma)
     function toPureNumber(s) {
         if (!s) return 0;
-        // Ganti koma jadi titik, hapus titik ribuan
-        let res = s.toString().replace(/\./g, '').replace(',', '.');
-        return parseFloat(res) || 0;
+        return parseFloat(s.toString().replace(/,/g, '')) || 0;
     }
 
     async function getPrice(symbol) {
@@ -136,35 +134,27 @@
 
     function handleInput(source) {
         let el = document.getElementById(source);
-        // Kita biarin user ngetik apa adanya di kolom ini (pake titik atau koma desimal)
-        let raw = el.value.replace(',', '.'); 
-        let val = parseFloat(raw) || 0;
-
-        // Kalau user ngetik di kolom selain USD/IDR (Crypto), ambil angka murni
-        if (source !== 'idr' && source !== 'usd') {
-            val = parseFloat(el.value) || 0;
-        }
-
+        let val = toPureNumber(el.value);
         calculate(source, val);
     }
 
     function calculate(source, val) {
         let baseUsd = 0;
 
-        // 1. Cari nilai dasar USD
         if (source === 'idr') baseUsd = val / usdToIdr;
         else if (source === 'usd') baseUsd = val;
         else baseUsd = val * (prices[source] || 0);
 
-        // 2. Update kolom LAIN (yang bukan lagi diketik)
+        // Update IDR (Ribuan koma, 0 desimal)
         if (source !== 'idr') {
-            document.getElementById('idr').value = toIDFormat(baseUsd * usdToIdr, 0);
+            document.getElementById('idr').value = toUSFormat(baseUsd * usdToIdr, 0);
         }
+        // Update USD (Ribuan koma, 2 desimal titik)
         if (source !== 'usd') {
-            document.getElementById('usd').value = toIDFormat(baseUsd, 2);
+            document.getElementById('usd').value = toUSFormat(baseUsd, 2);
         }
 
-        // Update Crypto (8 desimal)
+        // Update Crypto
         const updateCrypto = (id, p) => {
             if(id !== source) {
                 const target = document.getElementById(id);
