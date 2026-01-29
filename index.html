@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calc Kurs Pro</title>
-    <link rel="manifest" href="manifest-kurs.json">
+    <title>Calc Kurs Pro - Fast</title>
     <style>
         :root {
             --bg: #0f172a;
@@ -25,15 +24,7 @@
         .coin-info { flex: 1; }
         .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
         
-        /* FIX LOGO BENDERA: Kasih background putih biar ga kena force dark mode */
-        .flag-icon { 
-            width: 32px; height: 32px; border-radius: 50%; 
-            background: white; border: 2px solid #334155;
-            object-fit: cover;
-            /* Paksa browser jangan ngerubah warna ini */
-            color-scheme: light;
-        }
-
+        .flag-icon { width: 32px; height: 32px; border-radius: 50%; background: white; object-fit: cover; border: 2px solid #334155; }
         .coin-card img { width: 32px; height: 32px; border-radius: 50%; }
         
         input { width: 100%; background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; outline: none; padding: 0; }
@@ -49,8 +40,8 @@
 
 <div class="container">
     <div class="header">
-        <h2>💱 Calc Kurs</h2>
-        <button class="refresh-btn" onclick="fetchPrices()">🔄 Update</button>
+        <h2>💱 Calc Kurs Fast</h2>
+        <button class="refresh-btn" onclick="fetchAllPrices()">🔄 Update</button>
     </div>
 
     <div id="fixed-list">
@@ -69,17 +60,17 @@
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--btc);">
-            <img src="https://assets.coingecko.com/coins/images/1/small/bitcoin.png" alt="btc">
+            <img src="https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=035" alt="btc">
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
-                <input type="number" id="bitcoin" placeholder="0" oninput="calculate('bitcoin')">
+                <input type="number" id="btc" placeholder="0" oninput="calculate('btc')">
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--eth);">
-            <img src="https://assets.coingecko.com/coins/images/279/small/ethereum.png" alt="eth">
+            <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png?v=035" alt="eth">
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
-                <input type="number" id="ethereum" placeholder="0" oninput="calculate('ethereum')">
+                <input type="number" id="eth" placeholder="0" oninput="calculate('eth')">
             </div>
         </div>
     </div>
@@ -87,94 +78,112 @@
     <div id="watchlist"></div>
 
     <div class="search-section">
-        <label>TAMBAH KOIN LAIN</label>
+        <label>TAMBAH KOIN LAIN (Simbol)</label>
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Ketik: solana, dogecoin, xrp...">
+            <input type="text" id="search-input" placeholder="Contoh: sol, doge, xrp, bnb...">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
-        <div id="status" class="status-info">Menghubungkan ke pasar...</div>
+        <div id="status" class="status-info">Ready, Bro!</div>
     </div>
 </div>
 
 <script>
-    let rates = { usd_idr: 16000 }; 
-    let watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
+    // Patokan kurs USD ke IDR (bisa berubah sewaktu-waktu)
+    let usdToIdr = 16200; 
+    let prices = { btc: 0, eth: 0 };
+    let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
 
-    async function fetchPrices() {
-        const statusEl = document.getElementById('status');
-        statusEl.innerText = "Sabar Bro, lagi update harga...";
-        const allIds = ['bitcoin', 'ethereum', ...watchlist].join(',');
+    async function getPrice(symbol) {
         try {
-            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${allIds}&vs_currencies=usd,idr&t=${Date.now()}`);
-            const data = await res.json();
-            if (data.bitcoin) {
-                rates = { ...data, usd_idr: data.bitcoin.idr / data.bitcoin.usd };
-                statusEl.innerText = "Terakhir update: " + new Date().toLocaleTimeString();
-                renderWatchlist();
-            }
-        } catch (e) {
-            statusEl.innerText = "Gagal update. Cek internet elu, Bro.";
+            const res = await fetch(`https://cryptoprices.cc/${symbol.toUpperCase()}`);
+            const text = await res.json(); // API ini balikin angka langsung
+            return parseFloat(text);
+        } catch (e) { return 0; }
+    }
+
+    async function fetchAllPrices() {
+        document.getElementById('status').innerText = "Narik data cepet...";
+        
+        // Ambil harga utama
+        prices.btc = await getPrice('BTC');
+        prices.eth = await getPrice('ETH');
+        
+        // Ambil harga watchlist
+        for (let sym of watchlist) {
+            prices[sym] = await getPrice(sym);
         }
+
+        renderWatchlist();
+        document.getElementById('status').innerText = "Update Beres: " + new Date().toLocaleTimeString();
     }
 
     function calculate(source) {
         const val = parseFloat(document.getElementById(source).value) || 0;
         let baseUsd = 0;
-        if (source === 'idr') baseUsd = val / rates.usd_idr;
-        else if (source === 'usd') baseUsd = val;
-        else if (rates[source]) baseUsd = val * rates[source].usd;
 
-        const updateVal = (id, v, dec) => {
-            if(id !== source) document.getElementById(id).value = v.toFixed(dec).replace(/\.?0+$/, "");
+        if (source === 'idr') baseUsd = val / usdToIdr;
+        else if (source === 'usd') baseUsd = val;
+        else baseUsd = val * prices[source];
+
+        const update = (id, v, dec) => {
+            if(id !== source) {
+                const el = document.getElementById(id);
+                if(el) el.value = v.toFixed(dec).replace(/\.?0+$/, "");
+            }
         };
 
-        updateVal('idr', baseUsd * rates.usd_idr, 0);
-        updateVal('usd', baseUsd, 2);
-        updateVal('bitcoin', baseUsd / (rates.bitcoin?.usd || 1), 8);
-        updateVal('ethereum', baseUsd / (rates.ethereum?.usd || 1), 8);
+        update('idr', baseUsd * usdToIdr, 0);
+        update('usd', baseUsd, 2);
+        update('btc', baseUsd / prices.btc, 8);
+        update('eth', baseUsd / prices.eth, 8);
 
-        watchlist.forEach(id => {
-            if(rates[id]) updateVal(id, baseUsd / rates[id].usd, 8);
+        watchlist.forEach(sym => {
+            update(sym, baseUsd / prices[sym], 8);
         });
     }
 
     async function addCoin() {
         const input = document.getElementById('search-input');
-        const id = input.value.toLowerCase().trim();
-        if (!id || watchlist.includes(id)) return;
-        try {
-            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
-            const data = await res.json();
-            if (data[id]) {
-                watchlist.push(id);
-                localStorage.setItem('watchlist', JSON.stringify(watchlist));
-                input.value = "";
-                fetchPrices();
-            } else { alert("Koin '" + id + "' gak ketemu."); }
-        } catch (e) { alert("Sabar, lagi limit!"); }
+        const sym = input.value.toUpperCase().trim();
+        if (!sym || watchlist.includes(sym)) return;
+
+        const p = await getPrice(sym);
+        if (p > 0) {
+            watchlist.push(sym);
+            prices[sym] = p;
+            localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
+            input.value = "";
+            renderWatchlist();
+        } else {
+            alert("Koin " + sym + " gak ketemu di cryptoprices.cc");
+        }
     }
 
-    function removeCoin(id) {
-        watchlist = watchlist.filter(item => item !== id);
-        localStorage.setItem('watchlist', JSON.stringify(watchlist));
+    function removeCoin(sym) {
+        watchlist = watchlist.filter(s => s !== sym);
+        localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
         renderWatchlist();
     }
 
     function renderWatchlist() {
         const container = document.getElementById('watchlist');
         container.innerHTML = "";
-        watchlist.forEach(id => {
+        watchlist.forEach(sym => {
             const div = document.createElement('div');
             div.className = "coin-card";
-            div.innerHTML = `<img src="https://assets.coingecko.com/coins/images/placeholder.png" id="img-${id}"><div class="coin-info"><label>${id.toUpperCase()}</label><input type="number" id="${id}" placeholder="0" oninput="calculate('${id}')"></div><div class="delete-btn" onclick="removeCoin('${id}')">×</div>`;
+            div.innerHTML = `
+                <img src="https://cryptologos.cc/logos/${sym.toLowerCase()}-${sym.toLowerCase()}-logo.png" onerror="this.src='https://assets.coingecko.com/coins/images/placeholder.png'">
+                <div class="coin-info">
+                    <label>${sym}</label>
+                    <input type="number" id="${sym}" placeholder="0" oninput="calculate('${sym}')">
+                </div>
+                <div class="delete-btn" onclick="removeCoin('${sym}')">×</div>
+            `;
             container.appendChild(div);
-            fetch(`https://api.coingecko.com/api/v3/coins/${id}`).then(r => r.json()).then(d => {
-                document.getElementById(`img-${id}`).src = d.image.small;
-            }).catch(()=>{});
         });
     }
 
-    window.onload = fetchPrices;
+    window.onload = fetchAllPrices;
 </script>
 </body>
 </html>
