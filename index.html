@@ -24,14 +24,16 @@
         .coin-info { flex: 1; }
         .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 4px; }
         
-        /* Ikon Baru: Pake Logo Simbol */
+        /* Format Ribuan Label */
+        .format-label { display: block; font-size: 12px; color: var(--accent); font-weight: normal; margin-top: 2px; height: 15px; }
+
         .symbol-icon { 
-            width: 32px; height: 32px; border-radius: 50%; 
-            background: #334155; color: white;
+            width: 35px; height: 35px; border-radius: 10px; 
+            background: #334155; color: var(--accent);
             display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 14px; border: 1px solid var(--accent);
+            font-weight: bold; font-size: 16px; border: 1px solid #475569;
         }
-        .coin-card img { width: 32px; height: 32px; border-radius: 50%; }
+        .coin-card img { width: 35px; height: 35px; border-radius: 50%; }
         
         input { width: 100%; background: transparent; border: none; color: white; font-size: 18px; font-weight: bold; outline: none; padding: 0; }
         .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; }
@@ -51,11 +53,12 @@
     </div>
 
     <div id="fixed-list">
-        <div class="coin-card" style="border-left: 5px solid #22c55e;">
+        <div class="coin-card" style="border-left: 5px solid #ef4444;">
             <div class="symbol-icon">Rp</div>
             <div class="coin-info">
                 <label>IDR (Rupiah)</label>
                 <input type="number" id="idr" value="0" onfocus="clearZero(this)" oninput="calculate('idr')">
+                <span id="label-idr" class="format-label">Rp 0</span>
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid #3b82f6;">
@@ -63,6 +66,7 @@
             <div class="coin-info">
                 <label>USD (Dollar)</label>
                 <input type="number" id="usd" value="0" onfocus="clearZero(this)" oninput="calculate('usd')">
+                <span id="label-usd" class="format-label">$ 0</span>
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--btc);">
@@ -70,6 +74,7 @@
             <div class="coin-info">
                 <label>BTC (Bitcoin)</label>
                 <input type="number" id="btc" value="0" onfocus="clearZero(this)" oninput="calculate('btc')">
+                <span class="format-label"></span>
             </div>
         </div>
         <div class="coin-card" style="border-left: 5px solid var(--eth);">
@@ -77,6 +82,7 @@
             <div class="coin-info">
                 <label>ETH (Ethereum)</label>
                 <input type="number" id="eth" value="0" onfocus="clearZero(this)" oninput="calculate('eth')">
+                <span class="format-label"></span>
             </div>
         </div>
     </div>
@@ -84,9 +90,9 @@
     <div id="watchlist"></div>
 
     <div class="search-section">
-        <label>TAMBAH KOIN LAIN (Simbol)</label>
+        <label>TAMBAH KOIN (Simbol)</label>
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Contoh: sol, doge, xrp, bnb...">
+            <input type="text" id="search-input" placeholder="Contoh: sol, doge, xrp...">
             <button class="add-btn" onclick="addCoin()">Tambah</button>
         </div>
         <div id="status" class="status-info">Ready, Bro!</div>
@@ -98,11 +104,23 @@
     let prices = { btc: 1, eth: 1 };
     let watchlist = JSON.parse(localStorage.getItem('watchlist_fast')) || [];
 
-    // Fungsi buat ngilangin angka 0 pas di-klik
     function clearZero(el) {
-        if (el.value == "0") {
-            el.value = "";
+        if (el.value == "0") el.value = "";
+    }
+
+    // Fungsi buat format ribuan
+    function formatRibuan(angka, prefix) {
+        let number_string = angka.toFixed(0).toString(),
+            split = number_string.split('.'),
+            sisa = split[0].length % 3,
+            rupiah = split[0].substr(0, sisa),
+            ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+        if (ribuan) {
+            let separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
         }
+        return prefix + rupiah;
     }
 
     async function getPrice(symbol) {
@@ -114,14 +132,12 @@
     }
 
     async function fetchAllPrices() {
-        document.getElementById('status').innerText = "Updating data...";
+        document.getElementById('status').innerText = "Updating...";
         prices.btc = await getPrice('BTC');
         prices.eth = await getPrice('ETH');
-        for (let sym of watchlist) {
-            prices[sym] = await getPrice(sym);
-        }
+        for (let sym of watchlist) prices[sym] = await getPrice(sym);
         renderWatchlist();
-        document.getElementById('status').innerText = "Beres! Jam: " + new Date().toLocaleTimeString();
+        document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
     }
 
     function calculate(source) {
@@ -133,28 +149,32 @@
         else if (source === 'usd') baseUsd = val;
         else baseUsd = val * (prices[source] || 0);
 
-        const update = (id, v, dec) => {
+        // Update IDR
+        const idrVal = baseUsd * usdToIdr;
+        if(source !== 'idr') document.getElementById('idr').value = idrVal.toFixed(0);
+        document.getElementById('label-idr').innerText = formatRibuan(idrVal, 'Rp ');
+
+        // Update USD
+        if(source !== 'usd') document.getElementById('usd').value = baseUsd.toFixed(2);
+        document.getElementById('label-usd').innerText = '$ ' + baseUsd.toLocaleString('en-US');
+
+        // Update Crypto
+        const updateCrypto = (id, p) => {
             if(id !== source) {
                 const el = document.getElementById(id);
-                if(el) el.value = v.toFixed(dec).replace(/\.?0+$/, "");
+                if(el) el.value = (baseUsd / (p || 1)).toFixed(8).replace(/\.?0+$/, "");
             }
         };
 
-        update('idr', baseUsd * usdToIdr, 0);
-        update('usd', baseUsd, 2);
-        update('btc', baseUsd / (prices.btc || 1), 8);
-        update('eth', baseUsd / (prices.eth || 1), 8);
-
-        watchlist.forEach(sym => {
-            update(sym, baseUsd / (prices[sym] || 1), 8);
-        });
+        updateCrypto('btc', prices.btc);
+        updateCrypto('eth', prices.eth);
+        watchlist.forEach(sym => updateCrypto(sym, prices[sym]));
     }
 
     async function addCoin() {
         const input = document.getElementById('search-input');
         const sym = input.value.toUpperCase().trim();
         if (!sym || watchlist.includes(sym)) return;
-
         const p = await getPrice(sym);
         if (p > 0) {
             watchlist.push(sym);
@@ -162,9 +182,7 @@
             localStorage.setItem('watchlist_fast', JSON.stringify(watchlist));
             input.value = "";
             renderWatchlist();
-        } else {
-            alert("Simbol " + sym + " gak ketemu.");
-        }
+        } else { alert("Simbol gak ketemu."); }
     }
 
     function removeCoin(sym) {
@@ -179,14 +197,7 @@
         watchlist.forEach(sym => {
             const div = document.createElement('div');
             div.className = "coin-card";
-            div.innerHTML = `
-                <div class="symbol-icon" style="font-size:10px">${sym}</div>
-                <div class="coin-info">
-                    <label>${sym}</label>
-                    <input type="number" id="${sym}" value="0" onfocus="clearZero(this)" oninput="calculate('${sym}')">
-                </div>
-                <div class="delete-btn" onclick="removeCoin('${sym}')">×</div>
-            `;
+            div.innerHTML = `<div class="symbol-icon" style="font-size:10px">${sym}</div><div class="coin-info"><label>${sym}</label><input type="number" id="${sym}" value="0" onfocus="clearZero(this)" oninput="calculate('${sym}')"></div><div class="delete-btn" onclick="removeCoin('${sym}')">×</div>`;
             container.appendChild(div);
         });
     }
