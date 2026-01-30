@@ -17,33 +17,133 @@
             --accent: #38bdf8;
             --text: #f8fafc;
         }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); margin: 0; padding: env(safe-area-inset-top) 20px 20px 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 400px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: 0; background: var(--bg); padding: 10px 0; z-index: 10; }
+        * { 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        /* INI KUNCI BIAR GAK BISA SWIPE KE BAWAH / REFRESH */
+        html, body { 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            height: 100%;
+            overflow: hidden; /* Matiin scroll di body utama */
+            overscroll-behavior-y: contain; /* Matiin pull-to-refresh */
+        }
+
+        body { 
+            display: flex; 
+            justify-content: center; 
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 400px; 
+            height: 100vh;
+            overflow-y: auto; /* Scroll cuma di dalem container ini aja */
+            padding: env(safe-area-inset-top) 20px 20px 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            position: sticky; 
+            top: 0; 
+            background: var(--bg); 
+            padding: 10px 0; 
+            z-index: 10; 
+        }
+        
         h2 { margin: 0; font-size: 22px; color: var(--accent); }
-        .refresh-btn { background: var(--card); border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .refresh-btn { 
+            background: var(--card); 
+            border: 1px solid var(--accent); 
+            color: var(--accent); 
+            padding: 8px 12px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
         
         .coin-card { 
-            background: var(--card); border-radius: 16px; padding: 14px 18px; margin-bottom: 12px; 
-            display: flex; align-items: center; gap: 15px; border: 1px solid #334155; 
+            background: var(--card); 
+            border-radius: 16px; 
+            padding: 14px 18px; 
+            margin-bottom: 12px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border: 1px solid #334155; 
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
         }
+        
         .coin-info { flex: 1; }
-        .coin-info label { display: block; font-size: 11px; color: #94a3b8; font-weight: bold; margin-bottom: 2px; }
+        .coin-info label { 
+            display: block; 
+            font-size: 11px; 
+            color: #94a3b8; 
+            font-weight: bold; 
+            margin-bottom: 2px; 
+            text-transform: uppercase;
+        }
         
         .logo-wrapper { 
-            width: 40px; height: 40px; border-radius: 50%; overflow: hidden; 
-            display: flex; align-items: center; justify-content: center; 
-            background: #0f172a; border: 1px solid #475569; flex-shrink: 0; 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 50%; 
+            overflow: hidden; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: #0f172a; 
+            border: 1px solid #475569; 
+            flex-shrink: 0; 
         }
         .logo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-        input { width: 100%; background: transparent; border: none; color: white; font-size: 20px; font-weight: bold; outline: none; padding: 0; }
         
-        .search-section { margin-top: 30px; border-top: 1px dashed #334155; padding-top: 20px; padding-bottom: 50px; }
+        input { 
+            width: 100%; 
+            background: transparent; 
+            border: none; 
+            color: white; 
+            font-size: 20px; 
+            font-weight: bold; 
+            outline: none; 
+            padding: 0; 
+        }
+        
+        .search-section { 
+            margin-top: 30px; 
+            border-top: 1px dashed #334155; 
+            padding-top: 20px; 
+            padding-bottom: 100px; 
+        }
         .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
-        .search-box input { background: var(--card); border: 1px solid #334155; border-radius: 10px; padding: 12px; color: white; width: 100%; font-size: 14px; }
-        .add-btn { background: var(--accent); border: none; color: #0f172a; border-radius: 10px; padding: 0 15px; font-weight: bold; cursor: pointer; }
+        .search-box input { 
+            background: var(--card); 
+            border: 1px solid #334155; 
+            border-radius: 10px; 
+            padding: 12px; 
+            color: white; 
+            width: 100%; 
+            font-size: 14px; 
+            font-weight: normal;
+        }
+        .add-btn { 
+            background: var(--accent); 
+            border: none; 
+            color: #0f172a; 
+            border-radius: 10px; 
+            padding: 0 15px; 
+            font-weight: bold; 
+            cursor: pointer; 
+        }
         .delete-btn { color: #ef4444; font-size: 24px; cursor: pointer; padding-left: 10px; }
         .status-info { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 10px; }
     </style>
@@ -99,14 +199,15 @@
 </div>
 
 <script>
-    let usdToIdr = 16790; 
+    // KURS DIKUNCI SESUAI PERMINTAAN
+    let usdToIdr = 16790;  
     let prices = { btc: 0, eth: 0 };
     let watchlist = JSON.parse(localStorage.getItem('kurs_fast_v3')) || [];
 
     function getLogo(sym) {
         const s = sym.toLowerCase();
         const map = {
-            'sui': 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/sui/info/logo.png',
+            'sui': 'https://assets.coingecko.com/coins/images/26375/large/sui-ocean-64x64.png',
             'deep': 'https://assets.coingecko.com/coins/images/40049/large/deep.png',
             'sol': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
             'usdt': 'https://assets.coingecko.com/coins/images/325/large/tether.png'
@@ -116,10 +217,18 @@
 
     async function fetchPrice(s) {
         try {
-            const r = await fetch(`https://cryptoprices.cc/${s.toUpperCase()}`);
-            const t = await r.text();
-            return parseFloat(t.trim()) || 0;
-        } catch { return 0; }
+            // Pake API backup yang stabil buat harga crypto
+            const r = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${s.toUpperCase()}USDT`);
+            const d = await r.json();
+            return parseFloat(d.price) || 0;
+        } catch { 
+            // Fallback kalau Binance gagal
+            try {
+                const r2 = await fetch(`https://cryptoprices.cc/${s.toUpperCase()}`);
+                const t2 = await r2.text();
+                return parseFloat(t2.trim()) || 0;
+            } catch { return 0; }
+        }
     }
 
     async function fetchAllPrices() {
@@ -128,15 +237,14 @@
         prices.eth = await fetchPrice('ETH');
         for (let s of watchlist) prices[s] = await fetchPrice(s);
         renderWatchlist();
-        document.getElementById('status').innerText = "Update: " + new Date().toLocaleTimeString();
+        document.getElementById('status').innerText = "Rate: Rp " + usdToIdr.toLocaleString('id-ID') + " | " + new Date().toLocaleTimeString();
     }
 
-    // Fungsi format output yang tetep nahan nol di depan
     function formatOutput(num, dec) {
         if (num === 0) return "";
         return new Intl.NumberFormat('en-US', { 
             maximumFractionDigits: dec,
-            minimumIntegerDigits: 1 // Ini pokonya yang bikin angka 0 tetep ada!
+            minimumIntegerDigits: 1 
         }).format(num);
     }
 
@@ -144,7 +252,6 @@
         let el = document.getElementById(source);
         let rawValue = el.value.replace(/,/g, '');
         
-        // Cek kalau input cuma nol atau titik doang pas ngetik
         if (rawValue === "" || rawValue === "." || rawValue === "0" || rawValue === "0.") {
             const allInputs = document.querySelectorAll('input[inputmode="decimal"]');
             allInputs.forEach(input => { if(input.id !== source) input.value = ""; });
@@ -167,7 +274,6 @@
             }
         });
 
-        // Format input sendiri HANYA jika bukan sedang ngetik desimal
         if (!el.value.includes('.')) {
             let d = (source === 'idr') ? 0 : (source === 'usd' ? 4 : 8);
             el.value = formatOutput(val, d);
@@ -177,6 +283,7 @@
     async function addCoin() {
         let s = document.getElementById('search-input').value.toUpperCase().trim();
         if (!s || watchlist.includes(s)) return;
+        document.getElementById('status').innerText = "Checking " + s + "...";
         let p = await fetchPrice(s);
         if (p > 0) {
             watchlist.push(s);
@@ -184,7 +291,11 @@
             localStorage.setItem('kurs_fast_v3', JSON.stringify(watchlist));
             renderWatchlist();
             document.getElementById('search-input').value = "";
-        } else { alert("Simbol " + s + " gak ketemu!"); }
+            document.getElementById('status').innerText = s + " Added!";
+        } else { 
+            alert("Simbol " + s + " gak ketemu!"); 
+            document.getElementById('status').innerText = "Ready, Bro!";
+        }
     }
 
     function removeCoin(s) {
@@ -210,6 +321,15 @@
                 </div>`;
         });
     }
+
+    // Biar gak bisa swipe refresh di mobile
+    document.addEventListener('touchmove', function (e) {
+        if (e.target.closest('.container')) {
+            // Biarkan scroll di dalam container
+        } else {
+            e.preventDefault();
+        }
+    }, { passive: false });
 
     window.onload = fetchAllPrices;
 </script>
